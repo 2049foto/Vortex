@@ -1,0 +1,157 @@
+// Vortex Protocol Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User Model
+// ============================================
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  email         String?
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  transactions Transaction[]
+  preferences  UserPreference?
+  achievements UserAchievement[]
+  watchlist    Watchlist[]
+  alerts       Alert[]
+
+  @@index([walletAddress])
+}
+
+// ============================================
+// Transaction Model
+// ============================================
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  txHash      String   @unique
+  from        String
+  to          String
+  value       String   // Wei format as string for precision
+  chainId     Int
+  blockNumber BigInt
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tokens TransactionToken[]
+
+  @@index([userId, chainId])
+  @@index([txHash])
+}
+
+// ============================================
+// Transaction Token Model
+// ============================================
+model TransactionToken {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tokenAddress  String
+  symbol        String
+  name          String
+  amount        String      // Wei format as string for precision
+
+  @@index([transactionId, tokenAddress])
+}
+
+// ============================================
+// Token Cache Model
+// ============================================
+model TokenCache {
+  id             String   @id @default(cuid())
+  tokenAddress   String
+  chain          String
+  riskScore      Int      // 0-100
+  riskLevel      String   // SAFE, WARNING, DANGER
+  risks          Json     // Array of risk checks
+  safe           Boolean
+  honeypot       Boolean  @default(false)
+  rugpull        Boolean  @default(false)
+  transferability Boolean @default(true)
+  cachedAt       DateTime @default(now())
+  expiresAt      DateTime
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tokenAddress, chain])
+  @@index([riskLevel, safe])
+  @@index([expiresAt])
+  @@index([updatedAt])
+}
+
+// ============================================
+// User Preference Model
+// ============================================
+model UserPreference {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  darkMode      Boolean  @default(true)
+  notifications Boolean  @default(true)
+  language      String   @default("en")
+  theme         String   @default("dark")
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================
+// User Achievement Model
+// ============================================
+model UserAchievement {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String   // e.g., "first_scan", "high_hodler"
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+// ============================================
+// Watchlist Model
+// ============================================
+model Watchlist {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenAddress String
+  chain        String
+  symbol       String   @default("UNKNOWN")
+  name         String   @default("Unknown Token")
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, tokenAddress, chain])
+  @@index([userId])
+}
+
+// ============================================
+// Alert Model
+// ============================================
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // price, risk, volume
+  token     String
+  condition String   // above, below, equals
+  value     Float
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([userId, enabled])
+  @@index([token])
+}
+
