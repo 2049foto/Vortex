@@ -5,21 +5,16 @@ const app = new Hono();
 
 // CORS
 app.use("*", cors({
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://vortex-frontend.vercel.app",
-    "*"
-  ],
+  origin: "*",
   credentials: true
 }));
 
-// Health Check (Critical)
+// Health Check
 app.get("/api/health", (c) => {
   return c.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || "production"
+    env: "production"
   });
 });
 
@@ -39,7 +34,7 @@ app.get("/api/chains", (c) => {
   return c.json(chains);
 });
 
-// Scan endpoint (Minimal working version)
+// Scan endpoint
 app.post("/api/scan", async (c) => {
   try {
     const { address } = await c.req.json();
@@ -48,7 +43,6 @@ app.post("/api/scan", async (c) => {
       return c.json({ error: "Invalid address" }, 400);
     }
     
-    // Simulate scan (replace with real logic later)
     const mockTokens = [
       {
         address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
