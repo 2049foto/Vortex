@@ -26,7 +26,7 @@ const app = new Hono();
 
 // Global middleware
 app.use('*', loggerMiddleware());
-app.use('*', corsMiddleware());
+app.use('*', corsMiddleware);
 
 // Error handling
 app.onError(errorHandler);

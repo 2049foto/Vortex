@@ -21,6 +21,7 @@ export interface ScannedToken {
   verified: boolean;
   liquidity: number;
   holders: number;
+  age?: number;  // ← ADD THIS (in days)
   category: TokenCategory;
   allowedActions: TokenAction[];
 }

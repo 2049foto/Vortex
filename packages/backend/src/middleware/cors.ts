@@ -6,6 +6,8 @@
 import { type Context, type Next } from 'hono';
 import { config } from '../lib/config';
 
+type CorsMiddleware = (c: Context, next: Next) => Promise<void | Response>;
+
 /**
  * Allowed origins whitelist
  * NEVER use '*' in production
@@ -38,8 +40,7 @@ function isOriginAllowed(origin: string | undefined): boolean {
  * CORS middleware configuration
  * Uses strict whitelist, no wildcards
  */
-export function corsMiddleware() {
-  return async (c: Context, next: Next) => {
+export const corsMiddleware: CorsMiddleware = async (c: Context, next: Next) => {
     const origin = c.req.header('Origin');
     
     // Only set CORS headers if origin is in whitelist
@@ -65,8 +66,5 @@ export function corsMiddleware() {
     }
 
     await next();
-  };
-}
-
-export default corsMiddleware;
+};
 

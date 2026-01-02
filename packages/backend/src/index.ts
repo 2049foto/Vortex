@@ -428,20 +428,3 @@ async function updateUserXP(userId: string, xp: number): Promise<void> {
 // For Vercel (Node.js runtime)
 export default handle(app);
 
-// For local Bun development
-if (import.meta.main || process.env.NODE_ENV !== 'production') {
-  const port = process.env.PORT || 8787;
-  
-  // Use Node.js http server for Vercel compatibility
-  if (typeof Bun !== 'undefined') {
-    Bun.serve({
-      port: Number(port),
-      fetch: app.fetch,
-    });
-    console.log(`🚀 Backend server running on http://localhost:${port}`);
-  } else {
-    // Fallback for Node.js/Vercel - just export, don't start server
-    console.log(`Backend configured for port ${port}`);
-  }
-}
-
