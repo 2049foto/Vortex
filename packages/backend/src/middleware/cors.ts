@@ -66,5 +66,6 @@ export const corsMiddleware: CorsMiddleware = async (c: Context, next: Next) => 
     }
 
     await next();
+    return undefined;
 };
 
