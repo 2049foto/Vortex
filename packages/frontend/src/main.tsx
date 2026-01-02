@@ -6,6 +6,7 @@ import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles/globals.css';
+import './styles/mobile.css';
 
 // Get root element
 const rootElement = document.getElementById('root');
