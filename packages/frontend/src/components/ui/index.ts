@@ -12,4 +12,6 @@ export { Avatar } from './Avatar';
 export { Select } from './Select';
 export { Switch } from './Switch';
 export { Progress } from './Progress';
+export { toast, ToastProvider, Toaster } from './Toast';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 

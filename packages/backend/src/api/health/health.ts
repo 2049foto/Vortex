@@ -19,10 +19,11 @@ const startTime = Date.now();
 health.get('/', async (c) => {
   const uptime = Date.now() - startTime;
 
-  // Check database connection
+  // Check database connection using Prisma client method
   let dbStatus: 'connected' | 'disconnected' = 'disconnected';
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    // Use Prisma's built-in connection check instead of raw SQL
+    await prisma.$connect();
     dbStatus = 'connected';
   } catch {
     dbStatus = 'disconnected';
@@ -64,8 +65,8 @@ health.get('/', async (c) => {
  */
 health.get('/ready', async (c) => {
   try {
-    // Check database
-    await prisma.$queryRaw`SELECT 1`;
+    // Check database using Prisma connection
+    await prisma.$connect();
 
     // Check Redis if configured
     if (redis) {

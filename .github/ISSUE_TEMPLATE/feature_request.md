@@ -1,25 +1,43 @@
 ---
 name: Feature Request
-about: Suggest an idea for Vortex Protocol
-title: "[FEATURE] "
+about: Suggest a new feature or improvement
+title: '[FEATURE] '
 labels: enhancement
 assignees: ''
 ---
 
+## Feature Description
+A clear and concise description of the feature you'd like.
+
 ## Problem Statement
-A clear description of the problem this feature would solve.
+Describe the problem this feature would solve. Ex. I'm always frustrated when [...]
 
 ## Proposed Solution
-Describe the solution you'd like.
+A clear and concise description of what you want to happen.
 
 ## Alternatives Considered
-Any alternative solutions or features you've considered.
+Describe any alternative solutions or features you've considered.
+
+## Use Cases
+1. As a [user type], I want to [action] so that [benefit]
+2. ...
+
+## Mockups / Examples
+If applicable, add mockups, wireframes, or examples from other products.
+
+## Technical Considerations
+Any technical aspects that should be considered (APIs, performance, security, etc.)
+
+## Priority
+- [ ] Critical - Blocking users
+- [ ] High - Significantly improves UX
+- [ ] Medium - Nice to have
+- [ ] Low - Minor improvement
 
 ## Additional Context
-Add any other context, mockups, or screenshots.
+Add any other context or screenshots about the feature request here.
 
-## Impact
-- [ ] Critical for launch
-- [ ] High priority
-- [ ] Nice to have
-
+## Checklist
+- [ ] I have searched for existing feature requests
+- [ ] This feature aligns with the project's goals
+- [ ] I am willing to help implement this feature

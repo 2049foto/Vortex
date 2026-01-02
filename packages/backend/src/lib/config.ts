@@ -159,8 +159,9 @@ function validateEnv() {
   
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
-    console.error('❌ Invalid environment variables:');
-    console.error(parsed.error.flatten().fieldErrors);
+    // Use process.stderr for env validation errors (runs before logger init)
+    process.stderr.write('❌ Invalid environment variables:\n');
+    process.stderr.write(JSON.stringify(parsed.error.flatten().fieldErrors, null, 2) + '\n');
   }
 }
 

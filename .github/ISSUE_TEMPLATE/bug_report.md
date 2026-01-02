@@ -1,13 +1,13 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve
-title: "[BUG] "
+about: Report a bug or unexpected behavior
+title: '[BUG] '
 labels: bug
 assignees: ''
 ---
 
 ## Bug Description
-A clear and concise description of the bug.
+A clear and concise description of what the bug is.
 
 ## Steps to Reproduce
 1. Go to '...'
@@ -16,19 +16,19 @@ A clear and concise description of the bug.
 4. See error
 
 ## Expected Behavior
-What you expected to happen.
+A clear and concise description of what you expected to happen.
 
 ## Actual Behavior
-What actually happened.
+What actually happened instead.
 
 ## Screenshots
-If applicable, add screenshots.
+If applicable, add screenshots to help explain your problem.
 
 ## Environment
-- OS: [e.g., Windows 11, macOS 14]
-- Browser: [e.g., Chrome 120, Firefox 121]
-- Wallet: [e.g., MetaMask, Coinbase Wallet]
-- Version: [e.g., 1.0.0]
+- **Browser**: [e.g. Chrome 120, Firefox 121]
+- **OS**: [e.g. Windows 11, macOS 14]
+- **Wallet**: [e.g. MetaMask, Coinbase Wallet]
+- **Network**: [e.g. Base Mainnet, Base Sepolia]
 
 ## Console Errors
 ```
@@ -36,5 +36,9 @@ Paste any console errors here
 ```
 
 ## Additional Context
-Any other context about the problem.
+Add any other context about the problem here.
 
+## Checklist
+- [ ] I have searched for existing issues
+- [ ] I have provided all required information
+- [ ] I can reproduce this issue consistently
