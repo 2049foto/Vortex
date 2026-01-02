@@ -5,8 +5,10 @@
  */
 
 import { createPublicClient, http, type Address } from 'viem';
-import { Connection, PublicKey, getTokenAccountsByOwner, TOKEN_PROGRAM_ID } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { config } from '../config';
+import { classifier } from '../classifier';
 import type { ScannedToken, ScanResult } from './types';
 
 export class MultiChainScanner {
@@ -50,6 +52,8 @@ export class MultiChainScanner {
    * Scan wallet address across all supported chains
    */
   async scan(address: string): Promise<ScanResult> {
+    const startTime = Date.now();
+    
     const chains = [
       { id: 56, name: 'BSC', rpc: this.getRPCUrl(56, 'BSC') },
       { id: 42161, name: 'Arbitrum', rpc: this.getRPCUrl(42161, 'Arbitrum') },
@@ -63,14 +67,17 @@ export class MultiChainScanner {
 
     const allTokens: ScannedToken[] = [];
 
-    // Scan EVM chains in parallel
-    const evmResults = await Promise.allSettled(
-      chains.map((chain) => this.scanEVMChain(address as Address, chain))
-    );
+    // Scan EVM chains in parallel (max 3 at a time for rate limiting)
+    const evmChunks = this.chunkArray(chains, 3);
+    for (const chunk of evmChunks) {
+      const evmResults = await Promise.allSettled(
+        chunk.map((chain) => this.scanEVMChain(address as Address, chain))
+      );
 
-    for (const result of evmResults) {
-      if (result.status === 'fulfilled') {
-        allTokens.push(...result.value);
+      for (const result of evmResults) {
+        if (result.status === 'fulfilled') {
+          allTokens.push(...result.value);
+        }
       }
     }
 
@@ -82,45 +89,62 @@ export class MultiChainScanner {
       console.error('Solana scan error:', error);
     }
 
+    // Classify all tokens
+    const classifiedTokens = await classifier.classifyBatch(allTokens);
+
+    const scanDuration = Date.now() - startTime;
+
     return {
       address,
       timestamp: Date.now(),
       chains: chains.map((c) => c.name),
-      tokens: allTokens,
+      tokens: classifiedTokens,
       summary: {
-        totalValue: allTokens.reduce((sum, t) => sum + (t.valueUSD || 0), 0),
-        totalTokens: allTokens.length,
+        totalValue: classifiedTokens.reduce((sum, t) => sum + (t.valueUSD || 0), 0),
+        totalTokens: classifiedTokens.length,
         premium: {
-          count: allTokens.filter((t) => t.category === 'PREMIUM').length,
-          value: allTokens
+          count: classifiedTokens.filter((t) => t.category === 'PREMIUM').length,
+          value: classifiedTokens
             .filter((t) => t.category === 'PREMIUM')
             .reduce((sum, t) => sum + (t.valueUSD || 0), 0),
-          tokens: allTokens.filter((t) => t.category === 'PREMIUM'),
+          tokens: classifiedTokens.filter((t) => t.category === 'PREMIUM'),
         },
         dust: {
-          count: allTokens.filter((t) => t.category === 'DUST').length,
-          value: allTokens
+          count: classifiedTokens.filter((t) => t.category === 'DUST').length,
+          value: classifiedTokens
             .filter((t) => t.category === 'DUST')
             .reduce((sum, t) => sum + (t.valueUSD || 0), 0),
-          tokens: allTokens.filter((t) => t.category === 'DUST'),
+          tokens: classifiedTokens.filter((t) => t.category === 'DUST'),
         },
         micro: {
-          count: allTokens.filter((t) => t.category === 'MICRO').length,
-          value: allTokens
+          count: classifiedTokens.filter((t) => t.category === 'MICRO').length,
+          value: classifiedTokens
             .filter((t) => t.category === 'MICRO')
             .reduce((sum, t) => sum + (t.valueUSD || 0), 0),
-          tokens: allTokens.filter((t) => t.category === 'MICRO'),
+          tokens: classifiedTokens.filter((t) => t.category === 'MICRO'),
         },
         risk: {
-          count: allTokens.filter((t) => t.category === 'RISK').length,
-          value: allTokens
+          count: classifiedTokens.filter((t) => t.category === 'RISK').length,
+          value: classifiedTokens
             .filter((t) => t.category === 'RISK')
             .reduce((sum, t) => sum + (t.valueUSD || 0), 0),
-          tokens: allTokens.filter((t) => t.category === 'RISK'),
+          tokens: classifiedTokens.filter((t) => t.category === 'RISK'),
         },
       },
+      scanDuration,
       fromCache: false,
     };
+  }
+
+  /**
+   * Helper method to chunk array for parallel processing
+   */
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
   }
 
   /**
@@ -134,6 +158,7 @@ export class MultiChainScanner {
       chain: {
         id: chain.id,
         name: chain.name,
+        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
         rpcUrls: { default: { http: [chain.rpc] } },
       },
       transport: http(chain.rpc),
@@ -212,11 +237,12 @@ export class MultiChainScanner {
       });
 
       // Get SPL tokens
-      const tokenAccounts = await getTokenAccountsByOwner(connection, ownerPublicKey, {
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(ownerPublicKey, {
         programId: TOKEN_PROGRAM_ID,
       });
 
-      // TODO: Fetch token metadata for each SPL token
+      // TODO: Process tokenAccounts and fetch token metadata for each SPL token
+      console.log(`Found ${tokenAccounts.value.length} SPL tokens`);
     } catch (error) {
       console.error('Solana scan error:', error);
     }

@@ -6,7 +6,7 @@ import path from 'path';
  * Vite configuration for Vortex Protocol frontend
  * @see https://vitejs.dev/config/
  */
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   resolve: {
     alias: {
@@ -16,25 +16,28 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: {
+    // Proxy only in development
+    proxy: mode === 'development' ? {
       '/api': {
-        target: 'http://localhost:8787', // Hono dev server
+        target: process.env.VITE_API_URL || 'http://localhost:8787',
         changeOrigin: true,
         secure: false,
       },
-    },
+    } : undefined,
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    minify: 'esbuild',
-    target: 'esnext',
+    sourcemap: true,
+    minify: 'terser',
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
+          wagmi: ['wagmi', 'viem'],
+          rainbowkit: ['@rainbow-me/rainbowkit'],
           charts: ['recharts'],
-          utils: ['viem', 'zustand', 'clsx'],
+          utils: ['zustand', 'clsx'],
           virtual: ['@tanstack/react-virtual'],
           solana: ['@solana/web3.js', '@solana/spl-token'],
         },
@@ -48,5 +51,5 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
   },
-});
+}));
 

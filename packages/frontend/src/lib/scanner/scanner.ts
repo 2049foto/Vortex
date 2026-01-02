@@ -285,5 +285,6 @@ class VortexScanner {
   }
 }
 
-// Export singleton
+// Export class and singleton
+export { VortexScanner };
 export const scanner = new VortexScanner();

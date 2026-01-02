@@ -1,56 +1,284 @@
 /**
- * Vortex Protocol - Premium Global Styles
- * Inspired by Linear, Stripe, and Base
+ * Vortex Protocol 2026 - Global Styles
+ * Dark mode default + Glassmorphism + Neumorphism
  */
 
 @import 'tailwindcss';
 
 /* ==================== FONTS ==================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ==================== CSS VARIABLES ==================== */
+/* ==================== DARK MODE DEFAULT ==================== */
 :root {
-  /* Primary - Sky Blue */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* Base Network Colors (2026) */
+  --color-base-50: #4F8AFF;
+  --color-base-100: #4F8AFF;
+  --color-base-200: #4F8AFF;
+  --color-base-300: #4F8AFF;
+  --color-base-400: #4F8AFF;
+  --color-base-500: #0052FF;
+  --color-base-600: #0038B7;
+  --color-base-700: #002E94;
+  --color-base-800: #002474;
+  --color-base-900: #001A54;
+  --color-base-950: #001038;
 
-  /* Neutral - Warm Gray */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #fafaf8;
-  --color-neutral-100: #f5f5f2;
-  --color-neutral-200: #e7e5e1;
-  --color-neutral-300: #d6d3ce;
-  --color-neutral-400: #a8a29e;
-  --color-neutral-500: #78716c;
-  --color-neutral-600: #57534e;
-  --color-neutral-700: #44403c;
-  --color-neutral-800: #292524;
-  --color-neutral-900: #1c1917;
+  /* Category Colors (Risk Transparency) */
+  --color-premium: #10B981;
+  --color-dust: #F59E0B;
+  --color-micro: #6B7280;
+  --color-risk: #EF4444;
 
-  /* Semantic */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
+  /* Glassmorphism Colors */
+  --color-glass-bg: rgba(255, 255, 255, 0.05);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
+  --color-glass-light: rgba(255, 255, 255, 0.1);
+
+  /* Dark Mode Backgrounds */
+  --color-bg-primary: #0A0E1A;
+  --color-bg-secondary: #111627;
+  --color-bg-tertiary: #1A1F36;
+
+  /* Text Colors (Dark Mode) */
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
 
   /* Typography */
-  --font-display: -apple-system, "SF Pro Display", "Inter", sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "Fira Code", "JetBrains Mono", monospace;
+  --font-display: 'Inter', -apple-system, ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
 
   /* Motion */
   --duration-fast: 100ms;
-  --duration-normal: 150ms;
-  --duration-slow: 250ms;
-  --easing-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  /* Easing */
+  --ease-in-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ==================== DARK MODE STYLES ==================== */
+.dark {
+  color-scheme: dark;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* ==================== GLASSMORPHISM BASE ==================== */
+.glass {
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-lg {
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ==================== NEUMORPHIC BASE ==================== */
+.neumo {
+  background: linear-gradient(145deg, var(--color-base-500), var(--color-base-600));
+  border-radius: 16px;
+  box-shadow: 
+    8px 8px 16px rgba(0, 82, 255, 0.3),
+    -8px -8px 16px rgba(255, 255, 255, 0.1);
+  transition: all var(--duration-normal) var(--ease-in-out);
+}
+
+.neumo:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    10px 10px 20px rgba(0, 82, 255, 0.4),
+    -10px -10px 20px rgba(255, 255, 255, 0.15);
+}
+
+.neumo:active {
+  transform: translateY(0);
+  box-shadow: 
+    inset 8px 8px 16px rgba(0, 0, 0, 0.3),
+    inset -8px -8px 16px rgba(255, 255, 255, 0.1);
+}
+
+/* ==================== CATEGORY BADGES ==================== */
+.badge-premium {
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.badge-dust {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.badge-micro {
+  background: linear-gradient(135deg, #6B7280, #4B5563);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.badge-risk {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  animation: pulse-risk 2s infinite;
+}
+
+/* ==================== PROGRESS BARS ==================== */
+.progress-gradient {
+  background: linear-gradient(90deg, #0052FF, #4F8AFF, #0038B7, #0052FF);
+  background-size: 300% 100%;
+  animation: sweep 1.5s ease-in-out infinite;
+}
+
+/* ==================== RISK PULSE ANIMATION ==================== */
+@keyframes pulse-risk {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.8);
+  }
+}
+
+/* ==================== GLOW EFFECTS ==================== */
+.glow-primary {
+  box-shadow: 0 0 20px #0052FF, 0 0 40px #0052FF;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px #0052FF;
+  }
+  100% {
+    box-shadow: 0 0 20px #0052FF, 0 0 40px #0052FF;
+  }
+}
+
+/* ==================== SCROLLBAR STYLING ==================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-base-500);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-base-400);
+}
+
+/* ==================== SELECTION STYLING ==================== */
+::selection {
+  background: var(--color-base-500);
+  color: white;
+}
+
+/* ==================== FOCUS STYLES ==================== */
+.focus-ring:focus {
+  outline: 2px solid var(--color-base-500);
+  outline-offset: 2px;
+}
+
+/* ==================== DISABLED STATES ==================== */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==================== LOADING STATES ==================== */
+.loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+.text-gradient-primary {
+  background: linear-gradient(135deg, var(--color-base-500), var(--color-base-400));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hover-lift {
+  transition: transform var(--duration-normal) var(--ease-in-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* ==================== RESPONSIVE HELPERS ==================== */
+@media (max-width: 640px) {
+  .mobile-full {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
 }
 
 /* ==================== BASE STYLES ==================== */
@@ -62,7 +290,8 @@ html {
 }
 
 body {
-  @apply bg-gradient-to-br from-neutral-50 via-white to-sky-50/30 text-neutral-900;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
   min-height: 100vh;
 }
 

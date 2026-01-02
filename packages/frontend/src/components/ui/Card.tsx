@@ -1,12 +1,12 @@
 /**
- * Premium Card Component
- * Glassmorphism and elevated variants
+ * Vortex Protocol 2026 - Card Component
+ * Glassmorphism + Neumorphism hybrid
  */
 
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'default' | 'glass' | 'elevated' | 'outlined' | 'gradient';
+type Variant = 'glass' | 'glass-lg' | 'neumo' | 'category' | 'default';
 type Padding = 'none' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -14,33 +14,37 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   padding?: Padding;
   hover?: boolean;
   interactive?: boolean;
+  category?: 'premium' | 'dust' | 'micro' | 'risk';
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', padding = 'md', hover, interactive, children, ...props }, ref) => {
+  ({ className, variant = 'glass', padding = 'md', hover = false, interactive = false, category, children, ...props }, ref) => {
+    const variants = {
+      glass: 'glass rounded-glass',
+      'glass-lg': 'glass-lg rounded-xl',
+      neumo: 'neumo rounded-neumo',
+      category: category ? `badge-${category} rounded-xl` : 'glass rounded-xl',
+      default: 'bg-bg-secondary border border-glass-border rounded-xl',
+    };
+
+    const hoverEffects = hover ? 'hover-lift' : '';
+    const interactiveEffects = interactive ? 'cursor-pointer active:scale-[0.98]' : '';
+
     return (
       <div
         ref={ref}
         className={cn(
-          'rounded-2xl transition-all duration-200',
+          'transition-all duration-200',
+          variants[variant],
+          hoverEffects,
+          interactiveEffects,
           
-          // Variants
-          variant === 'default' && 'bg-white border border-neutral-200 shadow-sm',
-          variant === 'glass' && 'bg-white/80 backdrop-blur-xl border border-white/50 shadow-xl',
-          variant === 'elevated' && 'bg-white border border-neutral-100 shadow-lg',
-          variant === 'outlined' && 'bg-transparent border-2 border-neutral-200',
-          variant === 'gradient' && 'bg-gradient-to-br from-white to-neutral-50 border border-neutral-100 shadow-lg',
-
           // Padding
           padding === 'none' && 'p-0',
           padding === 'sm' && 'p-4',
           padding === 'md' && 'p-6',
           padding === 'lg' && 'p-8',
           padding === 'xl' && 'p-10',
-
-          // Effects
-          hover && 'hover:shadow-xl hover:scale-[1.02] hover:border-neutral-300',
-          interactive && 'cursor-pointer active:scale-[0.98]',
 
           className
         )}

@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Page } from '@/components/layout';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge, RiskBadge, Avatar, Progress, CircularProgress, Breadcrumb, Alert, Skeleton, Tabs, TabList, TabTrigger, TabContent } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Avatar, Progress, CircularProgress, Breadcrumb, Tooltip, Divider, Tabs, TabList, TabTrigger, TabContent, Alert, Skeleton } from '@/components/ui';
 import { formatAddress } from '@/lib/utils';
 
 // Mock scan result
@@ -31,7 +31,7 @@ const mockScanResult = {
   marketCap: '$3.2B',
 };
 
-export function TokenDetail() {
+export default function TokenDetail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const address = searchParams.get('address');
@@ -115,7 +115,9 @@ export function TokenDetail() {
                   />
                   <p className="text-sm text-neutral-500 mt-2">Security Score</p>
                 </div>
-                <RiskBadge score={result.riskScore} size="lg" />
+                <Badge variant={result.riskScore < 30 ? 'premium' : result.riskScore < 60 ? 'dust' : 'risk'} size="lg" pulse={result.riskScore >= 60}>
+                  {result.riskScore < 30 ? 'SAFE' : result.riskScore < 60 ? 'MEDIUM' : 'HIGH RISK'} • {result.riskScore}
+                </Badge>
               </div>
             </div>
           </Card>

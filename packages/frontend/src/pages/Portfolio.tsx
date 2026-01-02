@@ -18,7 +18,7 @@ import { usePortfolioScan } from '@/hooks/usePortfolioScan';
 import type { ScannedToken } from '@/lib/scanner/types';
 import { Search, Filter, Zap } from 'lucide-react';
 
-export function Portfolio() {
+export default function Portfolio() {
   const { address: evmAddress } = useAccount();
   const { publicKey: solanaAddress } = useWallet();
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +81,12 @@ export function Portfolio() {
     setShowActionModal(true);
   };
 
+  const handleBulkActionWithTokens = (action: any, tokens: ScannedToken[]) => {
+    // Convert to simple action for modal
+    const simpleAction = action.toLowerCase() as 'swap' | 'hide' | 'burn';
+    handleBulkAction(simpleAction);
+  };
+
   const handleConfirmAction = async () => {
     if (!pendingAction || selectedTokenObjects.length === 0) return;
 
@@ -113,7 +119,7 @@ export function Portfolio() {
         {/* Scanning Progress */}
         {isScanning && scanProgress && (
           <Card padding="lg" className="mb-8">
-            <ScanningProgress chains={scanProgress} />
+            <ScanningProgress scanId="scan-123" onComplete={() => {}} />
           </Card>
         )}
 
@@ -164,7 +170,7 @@ export function Portfolio() {
               {selectedTokens.size > 0 && (
                 <div className="flex items-center justify-between p-4 bg-sky-50 rounded-xl mb-4">
                   <div className="flex items-center gap-2">
-                    <Badge variant="info">{selectedTokens.size} selected</Badge>
+                    <Badge variant="default" size="sm">{selectedTokens.size} selected</Badge>
                     <span className="text-sm text-neutral-600">
                       Total value:{' '}
                       {selectedTokenObjects
@@ -209,7 +215,7 @@ export function Portfolio() {
                 tokens={filteredTokens}
                 selectedTokens={selectedTokens}
                 onSelectTokens={setSelectedTokens}
-                onBatchAction={handleBulkAction}
+                onBatchAction={handleBulkActionWithTokens}
               />
             </Card>
           </>

@@ -54,6 +54,7 @@ export interface ScanResult {
       tokens: ScannedToken[];
     };
   };
+  scanDuration?: number;
   fromCache: boolean;
 }
 

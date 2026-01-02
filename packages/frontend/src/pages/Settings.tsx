@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent, Button, Input, Switch, Select
 import { useAuthStore } from '@/stores/auth';
 import { formatAddress } from '@/lib/utils';
 
-export function Settings() {
+export default function Settings() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [notifications, setNotifications] = useState({
     priceAlerts: true,

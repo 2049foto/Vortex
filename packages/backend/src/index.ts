@@ -5,15 +5,49 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-// JWT will be implemented manually since hono/jwt might not be available
+import { jwt } from 'hono/jwt';
+import { handle } from 'hono/vercel';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { MultiChainScanner } from './lib/scanner/engine';
 import { cache } from './lib/cache';
 import { config } from './lib/config';
+import { calculateXP, getLevelFromXP, checkAchievements, generateDailyMissions, type ActionType } from './lib/gamification/xp';
 
 const app = new Hono();
 const prisma = new PrismaClient();
 const scanner = new MultiChainScanner();
+
+// Validation schemas
+const scanSchema = z.object({
+  address: z.string().regex(/^(0x[a-fA-F0-9]{40}|[1-9A-HJ-NP-Za-km-z]{32,44})$/)
+});
+
+const actionsSchema = z.object({
+  actions: z.array(z.object({
+    type: z.enum(['swap', 'hide', 'burn']),
+    token: z.string(),
+    amount: z.string()
+  }))
+});
+
+// Rate limiter: 100 requests per minute per IP
+const rateLimiter = new RateLimiterMemory({
+  points: 100,
+  duration: 60,
+});
+
+// Rate limiting middleware
+app.use('*', async (c, next) => {
+  const ip = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown';
+  try {
+    await rateLimiter.consume(ip);
+    await next();
+  } catch (rejRes) {
+    return c.json({ error: 'Too many requests' }, 429);
+  }
+});
 
 // CORS for frontend
 app.use(
@@ -23,7 +57,7 @@ app.use(
       // Allow requests from configured origins
       const allowedOrigins = config.cors.origins;
       if (!origin || allowedOrigins.includes(origin)) {
-        return true;
+        return origin;
       }
       // Default to first allowed origin
       return allowedOrigins[0] || 'http://localhost:5173';
@@ -57,11 +91,8 @@ const SUPPORTED_CHAINS = [
  */
 app.post('/api/scan', async (c) => {
   try {
-    const { address } = await c.req.json();
-
-    if (!address || typeof address !== 'string') {
-      return c.json({ error: 'Invalid address' }, 400);
-    }
+    const body = await c.req.json();
+    const { address } = scanSchema.parse(body);
 
     // Check cache first
     const cacheKey = `scan:${address}`;
@@ -79,6 +110,9 @@ app.post('/api/scan', async (c) => {
     return c.json(result);
   } catch (error) {
     console.error('Scan error:', error);
+    if (error instanceof z.ZodError) {
+      return c.json({ error: 'Invalid address format' }, 400);
+    }
     return c.json(
       { error: error instanceof Error ? error.message : 'Scan failed' },
       500
@@ -132,23 +166,10 @@ app.get('/api/health', async (c) => {
 // ============================================
 
 // JWT middleware for protected routes
-app.use('/api/user/*', async (c, next) => {
-  const authHeader = c.req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ error: 'Unauthorized' }, 401);
-  }
-
-  try {
-    const token = authHeader.substring(7);
-    // TODO: Implement JWT verification with jose library
-    // For now, extract userId from token payload
-    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-    c.set('user', payload);
-    await next();
-  } catch (error) {
-    return c.json({ error: 'Invalid token' }, 401);
-  }
-});
+app.use('/api/user/*', jwt({
+  secret: process.env.JWT_SECRET || 'development_secret_change_in_production_32chars_minimum',
+  alg: 'HS256'
+}));
 
 /**
  * GET /api/user/portfolio/:address
@@ -157,24 +178,24 @@ app.use('/api/user/*', async (c, next) => {
 app.get('/api/user/portfolio/:address', async (c) => {
   try {
     const { address } = c.req.param();
-    const user = c.get('user') as { userId?: string };
+    const payload = c.get('jwtPayload') as { sub?: string };
+    const userId = payload?.sub;
 
-    if (user.userId !== address) {
+    // Find user by wallet address first
+    const userRecord = await prisma.user.findUnique({
+      where: { walletAddress: address }
+    });
+
+    if (!userRecord || (userId && userId !== userRecord.id)) {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const portfolio = await prisma.portfolio.findUnique({
-      where: { userId: address },
-      include: {
-        tokens: true,
-      },
+    const portfolio = await prisma.portfolio.findMany({
+      where: { userId: userRecord.id },
+      orderBy: { valueUSD: 'desc' }
     });
 
-    if (!portfolio) {
-      return c.json({ error: 'Portfolio not found' }, 404);
-    }
-
-    return c.json(portfolio);
+    return c.json({ portfolio });
   } catch (error) {
     console.error('Portfolio error:', error);
     return c.json(
@@ -190,25 +211,130 @@ app.get('/api/user/portfolio/:address', async (c) => {
  */
 app.post('/api/user/actions', async (c) => {
   try {
-    const actions = await c.req.json();
-    const user = c.get('user') as { userId?: string };
+    const body = await c.req.json();
+    const { actions } = actionsSchema.parse(body);
+    const payload = c.get('jwtPayload') as { sub?: string };
+    const userId = payload?.sub;
+
+    if (!userId) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
 
     // Execute batch swap via Pimlico ERC-4337
-    const txHash = await executeBatchSwap(actions, user.userId || '');
+    const txHash = await executeBatchSwap(actions, userId);
 
     // Calculate XP earned
     const xpEarned = calculateXPEarned(actions);
 
     // Update user XP
-    if (user.userId) {
-      await updateUserXP(user.userId, xpEarned);
-    }
+    await updateUserXP(userId, xpEarned);
 
     return c.json({ txHash, xpEarned });
   } catch (error) {
     console.error('Actions error:', error);
+    if (error instanceof z.ZodError) {
+      return c.json({ error: 'Invalid actions format' }, 400);
+    }
     return c.json(
       { error: error instanceof Error ? error.message : 'Failed to execute actions' },
+      500
+    );
+  }
+});
+
+// ============================================
+// GAMIFICATION ENDPOINTS
+// ============================================
+
+/**
+ * POST /api/user/xp
+ * Award XP to user for actions
+ */
+app.post('/api/user/xp', async (c) => {
+  try {
+    const { userId, action, metadata } = await c.req.json();
+    
+    // TODO: Get user XP from database
+    const userXP = {
+      userId,
+      totalXP: 0,
+      level: 1,
+      xpToNextLevel: 500,
+      streakDays: 0,
+      achievements: []
+    };
+    
+    // Calculate XP earned
+    const xpEarned = calculateXP(action as ActionType, userXP);
+    
+    // Check for new achievements
+    const newAchievements = checkAchievements(userXP, action as ActionType, metadata);
+    
+    // Update user XP and achievements
+    // TODO: Save to database
+    
+    return c.json({
+      xpEarned,
+      newLevel: getLevelFromXP(userXP.totalXP + xpEarned),
+      newAchievements
+    });
+  } catch (error) {
+    console.error('XP error:', error);
+    return c.json(
+      { error: error instanceof Error ? error.message : 'Failed to award XP' },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/user/leaderboard
+ * Get weekly leaderboard
+ */
+app.get('/api/user/leaderboard', async (c) => {
+  try {
+    // TODO: Get leaderboard from Redis/Database
+    const leaderboard = [
+      { rank: 1, userId: '0x...', username: 'TraderJoe', xp: 15420, level: 15 },
+      { rank: 2, userId: '0x...', username: 'DeFiKing', xp: 12350, level: 13 },
+      { rank: 3, userId: '0x...', username: 'TokenMaster', xp: 9870, level: 11 }
+    ];
+    
+    return c.json({ leaderboard });
+  } catch (error) {
+    console.error('Leaderboard error:', error);
+    return c.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch leaderboard' },
+      500
+    );
+  }
+});
+
+/**
+ * GET /api/user/daily-missions
+ * Get daily missions for user
+ */
+app.get('/api/user/daily-missions/:userId', async (c) => {
+  try {
+    const { userId } = c.req.param();
+    
+    // TODO: Get user XP from database
+    const userXP = {
+      userId,
+      totalXP: 0,
+      level: 1,
+      xpToNextLevel: 500,
+      streakDays: 0,
+      achievements: []
+    };
+    
+    const missions = generateDailyMissions(userXP);
+    
+    return c.json({ missions });
+  } catch (error) {
+    console.error('Daily missions error:', error);
+    return c.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch daily missions' },
       500
     );
   }
@@ -222,16 +348,66 @@ async function executeBatchSwap(
   actions: Array<{ type: string; token: string; amount: string }>,
   userId: string
 ): Promise<string> {
-  // TODO: Implement Pimlico ERC-4337 batch swap
-  // This would use viem + permissionless + Pimlico paymaster
-  return `0x${Math.random().toString(16).slice(2, 66)}`;
+  // Filter for swap actions only
+  const swapActions = actions.filter(a => a.type === 'swap');
+  
+  if (swapActions.length === 0) {
+    throw new Error('No swap actions provided');
+  }
+  
+  try {
+    // In production, this would:
+    // 1. Create ERC-4337 user op with permissionless.js
+    // 2. Bundle multiple token swaps
+    // 3. Use Pimlico paymaster for gas sponsorship
+    // 4. Execute on Base network
+    
+    console.log(`Executing ${swapActions.length} swaps for user ${userId}`);
+    
+    // Mock implementation for now
+    // In production, would return real transaction hash
+    const mockTxHash = `0x${Array.from({length: 64}, () => 
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('')}`;
+    
+    // Save transaction to database
+    await prisma.transaction.create({
+      data: {
+        userId,
+        txHash: mockTxHash,
+        from: '0x0000000000000000000000000000000000000000', // Contract address
+        to: '0x0000000000000000000000000000000000000000', // Router address
+        value: '0',
+        chainId: 8453, // Base
+        blockNumber: BigInt(0), // Will be updated when confirmed
+      }
+    });
+    
+    // Save transaction tokens
+    for (const action of swapActions) {
+      await prisma.transactionToken.create({
+        data: {
+          transactionId: mockTxHash,
+          tokenAddress: action.token,
+          symbol: 'TOKEN', // Would fetch from metadata
+          name: 'Token Name', // Would fetch from metadata
+          amount: action.amount,
+        }
+      });
+    }
+    
+    return mockTxHash;
+  } catch (error) {
+    console.error('Batch swap error:', error);
+    throw new Error('Failed to execute batch swap');
+  }
 }
 
 function calculateXPEarned(actions: Array<{ type: string }>): number {
   const xpMap: Record<string, number> = {
-    swap: 10,
-    hide: 5,
-    burn: 3,
+    swap: 50,
+    hide: 25,
+    burn: 10,
   };
 
   return actions.reduce((total, action) => {
@@ -241,25 +417,31 @@ function calculateXPEarned(actions: Array<{ type: string }>): number {
 
 async function updateUserXP(userId: string, xp: number): Promise<void> {
   // TODO: Update user XP in database
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      // Add XP field to User model
-    },
-  });
+  console.log(`Adding ${xp} XP to user ${userId}`);
+  // For now, just log - would update User model with XP field
 }
 
 // ============================================
-// EXPORT FOR BUN
+// EXPORT FOR VERCEL
 // ============================================
 
-export default {
-  port: process.env.PORT || 8787,
-  fetch: app.fetch,
-};
+// For Vercel (Node.js runtime)
+export default handle(app);
 
-// For Vercel Edge
-export const config = {
-  runtime: 'edge',
-};
+// For local Bun development
+if (import.meta.main || process.env.NODE_ENV !== 'production') {
+  const port = process.env.PORT || 8787;
+  
+  // Use Node.js http server for Vercel compatibility
+  if (typeof Bun !== 'undefined') {
+    Bun.serve({
+      port: Number(port),
+      fetch: app.fetch,
+    });
+    console.log(`🚀 Backend server running on http://localhost:${port}`);
+  } else {
+    // Fallback for Node.js/Vercel - just export, don't start server
+    console.log(`Backend configured for port ${port}`);
+  }
+}
 
