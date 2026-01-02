@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { prisma } from '../../lib/db';
 import { ValidationError, NotFoundError } from '../../lib/errors';
 import { authMiddleware } from '../../middleware/auth';
+import type { Alert } from '@prisma/client';
 
 const alerts = new Hono();
 
@@ -43,7 +44,7 @@ alerts.get('/', async (c) => {
 
   return c.json({
     success: true,
-    data: items.map((item) => ({
+    data: items.map((item: Alert) => ({
       id: item.id,
       userId: item.userId,
       type: item.type,

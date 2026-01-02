@@ -8,6 +8,7 @@ import { prisma } from '../../lib/db';
 import { ValidationError, NotFoundError, AlreadyExistsError } from '../../lib/errors';
 import { authMiddleware } from '../../middleware/auth';
 import { isAddress } from 'viem';
+import type { Watchlist } from '@prisma/client';
 
 const watchlist = new Hono();
 
@@ -38,7 +39,7 @@ watchlist.get('/', async (c) => {
 
   return c.json({
     success: true,
-    data: items.map((item) => ({
+    data: items.map((item: Watchlist) => ({
       id: item.id,
       userId: item.userId,
       tokenAddress: item.tokenAddress,

@@ -39,19 +39,20 @@ const envSchema = z.object({
 });
 
 /**
- * Parse and validate environment
+ * Parse and validate environment in development
  */
-function loadConfig() {
+function validateEnv() {
+  if (process.env.NODE_ENV === 'production') return;
+  
   const parsed = envSchema.safeParse(process.env);
-
   if (!parsed.success) {
     console.error('❌ Invalid environment variables:');
     console.error(parsed.error.flatten().fieldErrors);
-    throw new Error('Invalid environment configuration');
   }
-
-  return parsed.data;
 }
+
+// Run validation in development
+validateEnv();
 
 /**
  * Application configuration

@@ -116,8 +116,12 @@ export function useWallet(): UseWalletReturn {
         throw new Error('No accounts found');
       }
 
-      const address = accountsArray[0];
+      const address = accountsArray[0] ?? null;
       const chainId = await getChainId();
+
+      if (!address) {
+        throw new Error('No accounts found');
+      }
 
       setState({
         address,
@@ -208,9 +212,10 @@ export function useWallet(): UseWalletReturn {
     if (accountsArray.length === 0) {
       disconnect();
     } else {
+      const newAddress = accountsArray[0] ?? null;
       setState((prev) => ({
         ...prev,
-        address: accountsArray[0],
+        address: newAddress,
       }));
     }
   }, [disconnect]);
@@ -237,8 +242,9 @@ export function useWallet(): UseWalletReturn {
       const accounts = await getAccounts();
       if (accounts.length > 0) {
         const chainId = await getChainId();
+        const address = accounts[0] ?? null;
         setState({
-          address: accounts[0],
+          address,
           chainId,
           isConnected: true,
           isConnecting: false,

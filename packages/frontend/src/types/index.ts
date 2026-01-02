@@ -63,7 +63,7 @@ export interface Token {
   name: string;
   decimals: number;
   logoUrl?: string;
-  chain: Chain;
+  chain?: Chain;
 }
 
 export interface TokenBalance extends Token {

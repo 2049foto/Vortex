@@ -7,12 +7,14 @@ import { usePortfolioStore, usePortfolioStats } from '@/stores/portfolio';
 import { useAuth } from './useAuth';
 import type { Chain } from '@/types';
 
+import type { Portfolio } from '@/types';
+
 /**
  * Portfolio hook return type
  */
 interface UsePortfolioReturn {
   /** Portfolio data */
-  portfolio: ReturnType<typeof usePortfolioStore>['portfolio'];
+  portfolio: Portfolio | null;
   /** Portfolio statistics */
   stats: ReturnType<typeof usePortfolioStats>;
   /** Loading state */

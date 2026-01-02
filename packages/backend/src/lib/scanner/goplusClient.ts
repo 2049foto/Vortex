@@ -109,7 +109,7 @@ export async function fetchTokenSecurity(
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as { code: number; message?: string; result?: Record<string, GoPlusTokenSecurity> };
       
       if (data.code !== 1) {
         throw new Error(data.message || 'GoPlus API error');

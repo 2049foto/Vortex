@@ -5,13 +5,14 @@
 
 import { Redis } from '@upstash/redis';
 import { config } from './config';
+import { logger } from './logger';
 
 /**
  * Create Redis client
  */
 function createRedisClient(): Redis | null {
   if (!config.redis.url || !config.redis.token) {
-    console.warn('⚠️ Redis not configured, caching disabled');
+    logger.warn('Redis not configured, caching disabled');
     return null;
   }
 
@@ -21,7 +22,7 @@ function createRedisClient(): Redis | null {
       token: config.redis.token,
     });
   } catch (error) {
-    console.error('❌ Failed to create Redis client:', error);
+    logger.error('Failed to create Redis client:', error);
     return null;
   }
 }
@@ -42,7 +43,7 @@ export const cache = {
       const value = await redis.get<T>(key);
       return value;
     } catch (error) {
-      console.error(`Cache get error for ${key}:`, error);
+      logger.error(`Cache get error for ${key}:`, error);
       return null;
     }
   },
@@ -57,7 +58,7 @@ export const cache = {
       await redis.set(key, value, { ex: ttlSeconds });
       return true;
     } catch (error) {
-      console.error(`Cache set error for ${key}:`, error);
+      logger.error(`Cache set error for ${key}:`, error);
       return false;
     }
   },
@@ -72,7 +73,7 @@ export const cache = {
       await redis.del(key);
       return true;
     } catch (error) {
-      console.error(`Cache delete error for ${key}:`, error);
+      logger.error(`Cache delete error for ${key}:`, error);
       return false;
     }
   },
@@ -87,7 +88,7 @@ export const cache = {
       const result = await redis.exists(key);
       return result === 1;
     } catch (error) {
-      console.error(`Cache exists error for ${key}:`, error);
+      logger.error(`Cache exists error for ${key}:`, error);
       return false;
     }
   },

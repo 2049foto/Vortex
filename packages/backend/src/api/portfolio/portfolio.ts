@@ -9,6 +9,7 @@ import { config } from '../../lib/config';
 import { ValidationError } from '../../lib/errors';
 import { isAddress } from 'viem';
 import { portfolioRateLimit } from '../../middleware/rateLimit';
+import type { Transaction, TransactionToken } from '@prisma/client';
 
 const portfolio = new Hono();
 
@@ -203,7 +204,7 @@ portfolio.get('/:address/transactions', async (c) => {
   return c.json({
     success: true,
     data: {
-      transactions: user.transactions.map((tx) => ({
+      transactions: user.transactions.map((tx: Transaction & { tokens: TransactionToken[] }) => ({
         id: tx.id,
         txHash: tx.txHash,
         from: tx.from,
@@ -212,7 +213,7 @@ portfolio.get('/:address/transactions', async (c) => {
         chainId: tx.chainId,
         blockNumber: tx.blockNumber.toString(),
         createdAt: tx.createdAt.toISOString(),
-        tokens: tx.tokens.map((t) => ({
+        tokens: tx.tokens.map((t: TransactionToken) => ({
           address: t.tokenAddress,
           symbol: t.symbol,
           name: t.name,

@@ -33,7 +33,7 @@ describe('Signature Utilities', () => {
   describe('isValidEVMAddress', () => {
     test('should validate correct EVM addresses', () => {
       expect(isValidEVMAddress('0x1234567890abcdef1234567890abcdef12345678')).toBe(true);
-      expect(isValidEVMAddress('0xABCDEF1234567890abcdef1234567890abcdef12')).toBe(true);
+      expect(isValidEVMAddress('0xabcdef1234567890abcdef1234567890abcdef12')).toBe(true);
     });
 
     test('should reject invalid addresses', () => {

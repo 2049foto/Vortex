@@ -3,7 +3,7 @@
  * Coordinates GoPlus API, caching, and database
  */
 
-import { fetchTokenSecurity, parseSecurityResult, type SecurityResult } from './goplusClient';
+import { fetchTokenSecurity, parseSecurityResult, type SecurityResult, type RiskCheck } from './goplusClient';
 import { cache } from '../cache';
 import { prisma } from '../db';
 import { config } from '../config';
@@ -110,8 +110,8 @@ export async function scanToken(
         rugpull: dbCached.rugpull,
         transferability: dbCached.transferability,
         risks: typeof dbCached.risks === 'string' 
-          ? JSON.parse(dbCached.risks)
-          : dbCached.risks as SecurityResult['risks'],
+          ? JSON.parse(dbCached.risks) as RiskCheck[]
+          : (dbCached.risks as unknown) as RiskCheck[],
       },
       cachedAt: dbCached.cachedAt.toISOString(),
       expiresAt: dbCached.expiresAt.toISOString(),
@@ -230,8 +230,8 @@ export async function getCachedScan(
         rugpull: dbCached.rugpull,
         transferability: dbCached.transferability,
         risks: typeof dbCached.risks === 'string'
-          ? JSON.parse(dbCached.risks)
-          : dbCached.risks as SecurityResult['risks'],
+          ? JSON.parse(dbCached.risks) as RiskCheck[]
+          : (dbCached.risks as unknown) as RiskCheck[],
       },
       cachedAt: dbCached.cachedAt.toISOString(),
       expiresAt: dbCached.expiresAt.toISOString(),

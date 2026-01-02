@@ -6,12 +6,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { authApi } from '@/lib/api';
 
+import type { User } from '@/types';
+
 /**
  * Hook return type
  */
 interface UseAuthReturn {
   /** Current user */
-  user: ReturnType<typeof useAuthStore>['user'];
+  user: User | null;
   /** Is user authenticated */
   isAuthenticated: boolean;
   /** Loading state */
@@ -57,7 +59,7 @@ export function useAuth(): UseAuthReturn {
 
       try {
         // Get message to sign from backend
-        const { message, nonce, timestamp } = await authApi.getMessage(address);
+        const { message } = await authApi.getMessage(address);
         
         // Request signature from wallet
         const signature = await signMessage(message);
