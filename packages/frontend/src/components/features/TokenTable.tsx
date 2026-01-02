@@ -13,7 +13,9 @@ import { CHAINS } from '@/lib/chains/config';
 
 interface TokenTableProps {
   tokens: ScannedToken[];
-  onBatchAction: (action: TokenAction, tokens: ScannedToken[]) => void;
+  selectedTokens?: Set<string>;
+  onSelectTokens?: (selected: Set<string>) => void;
+  onBatchAction?: (action: TokenAction, tokens: ScannedToken[]) => void;
   showHidden?: boolean;
   onToggleHidden?: (show: boolean) => void;
   className?: string;
@@ -21,12 +23,16 @@ interface TokenTableProps {
 
 export function TokenTable({
   tokens,
+  selectedTokens: externalSelected,
+  onSelectTokens,
   onBatchAction,
   showHidden = false,
   onToggleHidden,
   className,
 }: TokenTableProps) {
-  const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(new Set());
+  const selectedTokens = externalSelected || internalSelected;
+  const setSelectedTokens = onSelectTokens || setInternalSelected;
   const [sortBy, setSortBy] = useState<'value' | 'risk' | 'chain'>('value');
   const [filterCategory, setFilterCategory] = useState<TokenCategory | 'ALL'>('ALL');
   const parentRef = useRef<HTMLDivElement>(null);

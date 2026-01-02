@@ -9,13 +9,16 @@ import { Card, Badge, Button } from '@/components/ui';
 import type { ScanResult } from '@/lib/scanner/types';
 
 interface SummaryCardsProps {
-  data: ScanResult | null;
+  summary: ScanResult['summary'] | null;
+  data?: ScanResult | null; // For backward compatibility
   onQuickAction?: (action: 'swap-dust' | 'hide-risk' | 'burn-micro') => void;
   className?: string;
 }
 
-export function SummaryCards({ data, onQuickAction, className }: SummaryCardsProps) {
-  if (!data) {
+export function SummaryCards({ summary, data, onQuickAction, className }: SummaryCardsProps) {
+  const summaryData = summary || data?.summary;
+  
+  if (!summaryData) {
     return (
       <div className={cn('grid sm:grid-cols-2 lg:grid-cols-4 gap-4', className)}>
         {[1, 2, 3, 4].map(i => (
@@ -32,16 +35,16 @@ export function SummaryCards({ data, onQuickAction, className }: SummaryCardsPro
   const cards = [
     {
       label: 'Total Portfolio',
-      value: data.summary.totalValue,
-      count: data.summary.totalTokens,
+      value: summaryData.totalValue,
+      count: summaryData.totalTokens,
       icon: '💰',
       color: 'from-sky-500 to-blue-600',
       bgColor: 'bg-sky-50',
     },
     {
       label: 'Premium Assets',
-      value: data.summary.premium.value,
-      count: data.summary.premium.count,
+      value: summaryData.premium.value,
+      count: summaryData.premium.count,
       icon: '💎',
       color: 'from-emerald-500 to-green-600',
       bgColor: 'bg-emerald-50',
@@ -49,8 +52,8 @@ export function SummaryCards({ data, onQuickAction, className }: SummaryCardsPro
     },
     {
       label: 'Dust Tokens',
-      value: data.summary.dust.value,
-      count: data.summary.dust.count,
+      value: summaryData.dust.value,
+      count: summaryData.dust.count,
       icon: '🌾',
       color: 'from-amber-500 to-orange-600',
       bgColor: 'bg-amber-50',
@@ -59,8 +62,8 @@ export function SummaryCards({ data, onQuickAction, className }: SummaryCardsPro
     },
     {
       label: 'Risk Tokens',
-      value: data.summary.risk.value,
-      count: data.summary.risk.count,
+      value: summaryData.risk.value,
+      count: summaryData.risk.count,
       icon: '⚠️',
       color: 'from-red-500 to-rose-600',
       bgColor: 'bg-red-50',

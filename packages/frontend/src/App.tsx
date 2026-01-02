@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { Loader } from '@/components/ui';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { WalletProvider } from '@/providers/WalletProvider';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })));
@@ -29,9 +30,10 @@ function PageLoader() {
 export function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+      <WalletProvider>
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
           {/* Public Home (no footer for cleaner landing) */}
           <Route
             path="/"
@@ -66,6 +68,7 @@ export function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
+      </WalletProvider>
     </ErrorBoundary>
   );
 }
