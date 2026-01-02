@@ -1,24 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "name": "vortex-protocol",
   "version": 2,
-  "framework": "vite",
-  "buildCommand": "cd packages/frontend && bun install && bun run build",
+  "buildCommand": "cd packages/frontend && npm install && npm run build",
   "outputDirectory": "packages/frontend/dist",
-  "installCommand": "bun install --frozen-lockfile",
-  "devCommand": "bun run dev:frontend",
+  "installCommand": "npm install",
+  "framework": "vite",
   "regions": ["iad1"],
-  "functions": {
-    "packages/backend/src/server.ts": {
-      "runtime": "nodejs20.x",
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "/packages/backend/src/server.ts"
+      "destination": "https://vortex-api.vercel.app/api/:path*"
     },
     {
       "source": "/((?!api/).*)",
@@ -43,9 +34,5 @@
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "crons": []
+  ]
 }
