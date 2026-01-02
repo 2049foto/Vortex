@@ -190,6 +190,16 @@ a {
   animation: scale-in 0.2s ease-out;
 }
 
+/* Confetti animation for achievements */
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-out forwards;
+}
+
 /* ==================== TAILWIND ANIMATE ==================== */
 @keyframes enter {
   from {
