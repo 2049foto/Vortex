@@ -1,1 +1,1 @@
-{"functions": {"src/index.ts": {"runtime": "nodejs18.x"}}}
+{"functions": {"src/index.ts": {"runtime": "@vercel/node@3.0.0"}}}
