@@ -4,8 +4,9 @@
  */
 
 import type { ApiResponse, ApiError } from '@/types';
+import { config } from './config';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = config.api.url || '/api';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
