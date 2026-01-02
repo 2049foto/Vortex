@@ -1,163 +1,70 @@
 /**
- * Input component for Vortex Protocol
+ * Input Component - Base-inspired
  */
 
-import React, { forwardRef, useId } from 'react';
-import { clsx } from 'clsx';
-import { AlertCircle, Check } from 'lucide-react';
+import { forwardRef } from 'react';
 
-export type InputSize = 'sm' | 'md' | 'lg';
-
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
-  /** Input size */
-  size?: InputSize;
-  /** Label text */
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  /** Helper text */
-  helperText?: string;
-  /** Error message */
   error?: string;
-  /** Success state */
-  success?: boolean;
-  /** Left icon or addon */
-  leftAddon?: React.ReactNode;
-  /** Right icon or addon */
-  rightAddon?: React.ReactNode;
-  /** Full width */
+  hint?: string;
+  icon?: React.ReactNode;
   fullWidth?: boolean;
 }
 
-const sizeStyles: Record<InputSize, string> = {
-  sm: 'h-8 text-sm px-3',
-  md: 'h-10 text-sm px-4',
-  lg: 'h-12 text-base px-4',
-};
-
-const addonSizeStyles: Record<InputSize, string> = {
-  sm: 'px-2',
-  md: 'px-3',
-  lg: 'px-4',
-};
-
-/**
- * Input component with label, helper text, and validation states
- */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      className,
-      size = 'md',
-      label,
-      helperText,
-      error,
-      success = false,
-      leftAddon,
-      rightAddon,
-      fullWidth = false,
-      disabled,
-      id: providedId,
-      ...props
-    },
-    ref
-  ) => {
-    const generatedId = useId();
-    const id = providedId || generatedId;
-
-    const hasError = !!error;
-    const showSuccess = success && !hasError;
-
+  ({ 
+    label,
+    error,
+    hint,
+    icon,
+    fullWidth = false,
+    className = '',
+    ...props 
+  }, ref) => {
     return (
-      <div className={clsx('flex flex-col gap-1.5', fullWidth && 'w-full')}>
+      <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
-          <label
-            htmlFor={id}
-            className="text-sm font-medium text-text-secondary"
-          >
+          <label className="block text-sm font-medium text-neutral-700 mb-2">
             {label}
           </label>
         )}
-
-        <div className="relative flex">
-          {leftAddon && (
-            <div
-              className={clsx(
-                'flex items-center justify-center',
-                'bg-background-elevated border border-r-0 border-border',
-                'rounded-l-xl text-text-muted',
-                addonSizeStyles[size]
-              )}
-            >
-              {leftAddon}
+        
+        <div className="relative">
+          {icon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              {icon}
             </div>
           )}
-
+          
           <input
             ref={ref}
-            id={id}
-            disabled={disabled}
-            className={clsx(
-              // Base styles
-              'flex-1 bg-background-card text-text-primary',
-              'border border-border rounded-xl',
-              'placeholder:text-text-muted',
-              'transition-all duration-150',
-              // Focus styles
-              'focus:outline-none focus:border-primary-500',
-              'focus:ring-2 focus:ring-primary-500/20',
-              // Disabled styles
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              'disabled:bg-background-elevated',
-              // Error styles
-              hasError && 'border-danger-DEFAULT focus:border-danger-DEFAULT focus:ring-danger-DEFAULT/20',
-              // Success styles
-              showSuccess && 'border-success-DEFAULT focus:border-success-DEFAULT focus:ring-success-DEFAULT/20',
-              // Size styles
-              sizeStyles[size],
-              // Addon styles
-              leftAddon && 'rounded-l-none',
-              rightAddon && 'rounded-r-none',
-              // Right padding for status icon
-              (hasError || showSuccess) && !rightAddon && 'pr-10',
-              className
-            )}
+            className={`
+              w-full px-4 py-3 ${icon ? 'pl-10' : ''}
+              bg-white border border-neutral-200
+              rounded-xl
+              text-neutral-900 placeholder-neutral-400
+              transition-all duration-200
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              hover:border-neutral-300
+              disabled:bg-neutral-50 disabled:cursor-not-allowed
+              ${error ? 'border-red-500 focus:ring-red-500' : ''}
+              ${className}
+            `}
             {...props}
           />
-
-          {rightAddon && (
-            <div
-              className={clsx(
-                'flex items-center justify-center',
-                'bg-background-elevated border border-l-0 border-border',
-                'rounded-r-xl text-text-muted',
-                addonSizeStyles[size]
-              )}
-            >
-              {rightAddon}
-            </div>
-          )}
-
-          {/* Status icon */}
-          {!rightAddon && (hasError || showSuccess) && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              {hasError && (
-                <AlertCircle className="w-4 h-4 text-danger-DEFAULT" />
-              )}
-              {showSuccess && (
-                <Check className="w-4 h-4 text-success-DEFAULT" />
-              )}
-            </div>
-          )}
         </div>
-
-        {/* Helper text or error */}
-        {(helperText || error) && (
-          <p
-            className={clsx(
-              'text-xs',
-              hasError ? 'text-danger-DEFAULT' : 'text-text-muted'
-            )}
-          >
-            {error || helperText}
+        
+        {hint && !error && (
+          <p className="mt-2 text-sm text-neutral-500">{hint}</p>
+        )}
+        
+        {error && (
+          <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {error}
           </p>
         )}
       </div>
@@ -166,72 +73,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
-
-/**
- * Search input with search icon
- */
-export interface SearchInputProps extends Omit<InputProps, 'leftAddon'> {
-  /** Loading state */
-  isSearching?: boolean;
-}
-
-export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ isSearching = false, placeholder = 'Search...', ...props }, ref) => {
-    return (
-      <Input
-        ref={ref}
-        type="search"
-        placeholder={placeholder}
-        leftAddon={
-          <svg
-            className={clsx('w-4 h-4', isSearching && 'animate-pulse')}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        }
-        {...props}
-      />
-    );
-  }
-);
-
-SearchInput.displayName = 'SearchInput';
-
-/**
- * Token address input with validation
- */
-export interface AddressInputProps extends Omit<InputProps, 'leftAddon'> {
-  /** Chain for address validation */
-  chain?: string;
-}
-
-export const AddressInput = forwardRef<HTMLInputElement, AddressInputProps>(
-  ({ placeholder = '0x...', ...props }, ref) => {
-    return (
-      <Input
-        ref={ref}
-        type="text"
-        placeholder={placeholder}
-        spellCheck={false}
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        className="font-mono"
-        {...props}
-      />
-    );
-  }
-);
-
-AddressInput.displayName = 'AddressInput';
-
-export default Input;
 

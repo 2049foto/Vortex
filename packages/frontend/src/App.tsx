@@ -2,11 +2,9 @@
  * Main App component with routing for Vortex Protocol
  */
 
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Layout, PageLayout } from '@/components/layout';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { initializeDarkMode } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 
 // Lazy load pages for code splitting
@@ -22,14 +20,14 @@ const Settings = lazy(() => import('@/pages/Settings'));
  */
 function PageLoader(): React.ReactElement {
   return (
-    <div className="p-8 space-y-6">
-      <Skeleton height={60} className="mb-6" />
+    <div className="min-h-screen bg-neutral-50 p-8 space-y-6">
+      <Skeleton height="3rem" className="mb-6" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Skeleton height={120} />
-        <Skeleton height={120} />
-        <Skeleton height={120} />
+        <Skeleton height="8rem" />
+        <Skeleton height="8rem" />
+        <Skeleton height="8rem" />
       </div>
-      <Skeleton height={400} />
+      <Skeleton height="24rem" />
     </div>
   );
 }
@@ -53,32 +51,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }): React.Reac
  * App component
  */
 function App(): React.ReactElement {
-  // Initialize dark mode on app load
-  useEffect(() => {
-    initializeDarkMode();
-  }, []);
-
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public Routes */}
-        <Route
-          path="/"
-          element={
-            <PageLayout>
-              <Home />
-            </PageLayout>
-          }
-        />
+        <Route path="/" element={<Home />} />
 
-        {/* Dashboard Routes (with sidebar) */}
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Layout showSidebar>
-                <Dashboard />
-              </Layout>
+              <Dashboard />
             </ProtectedRoute>
           }
         />
@@ -87,20 +71,16 @@ function App(): React.ReactElement {
           path="/portfolio"
           element={
             <ProtectedRoute>
-              <Layout showSidebar>
-                <Portfolio />
-              </Layout>
+              <Portfolio />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/tokens/:address"
+          path="/token/:address"
           element={
             <ProtectedRoute>
-              <Layout showSidebar>
-                <TokenDetail />
-              </Layout>
+              <TokenDetail />
             </ProtectedRoute>
           }
         />
@@ -109,9 +89,7 @@ function App(): React.ReactElement {
           path="/watchlist"
           element={
             <ProtectedRoute>
-              <Layout showSidebar>
-                <Watchlist />
-              </Layout>
+              <Watchlist />
             </ProtectedRoute>
           }
         />
@@ -120,9 +98,7 @@ function App(): React.ReactElement {
           path="/settings"
           element={
             <ProtectedRoute>
-              <Layout showSidebar>
-                <Settings />
-              </Layout>
+              <Settings />
             </ProtectedRoute>
           }
         />

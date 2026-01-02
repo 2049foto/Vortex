@@ -1,152 +1,99 @@
 /**
- * Footer component for Vortex Protocol
+ * Footer Component
  */
 
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { clsx } from 'clsx';
-import { Github, Twitter, MessageCircle } from 'lucide-react';
 
-/**
- * Footer component
- */
-export function Footer(): React.ReactElement {
-  const currentYear = new Date().getFullYear();
-
-  const footerLinks = {
-    product: [
-      { label: 'Dashboard', href: '/dashboard' },
-      { label: 'Portfolio', href: '/portfolio' },
-      { label: 'Token Scanner', href: '/dashboard' },
-      { label: 'Watchlist', href: '/watchlist' },
-    ],
-    resources: [
-      { label: 'Documentation', href: '/docs' },
-      { label: 'API Reference', href: '/api' },
-      { label: 'Help Center', href: '/help' },
-      { label: 'Status', href: '/status' },
-    ],
-    legal: [
-      { label: 'Privacy Policy', href: '/privacy' },
-      { label: 'Terms of Service', href: '/terms' },
-      { label: 'Cookie Policy', href: '/cookies' },
-    ],
-  };
-
-  const socialLinks = [
-    { icon: <Twitter className="w-5 h-5" />, href: 'https://twitter.com/vortexprotocol', label: 'Twitter' },
-    { icon: <Github className="w-5 h-5" />, href: 'https://github.com/vortexprotocol', label: 'GitHub' },
-    { icon: <MessageCircle className="w-5 h-5" />, href: 'https://discord.gg/vortex', label: 'Discord' },
-  ];
-
+export function Footer() {
   return (
-    <footer className="border-t border-border bg-background-card">
-      <div className="container mx-auto py-12 px-4">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-8">
+    <footer className="bg-neutral-900 text-white py-12 mt-20">
+      <div className="container mx-auto px-6">
+        <div className="grid md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-2">
-            <Link to="/" className="inline-flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center">
-                <span className="text-white text-sm font-black">V</span>
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">V</span>
               </div>
-              <span className="text-xl font-bold text-text-primary">Vortex</span>
-            </Link>
-            <p className="text-sm text-text-secondary max-w-xs mb-4">
-              Advanced DeFi token security scanner and portfolio tracker. 
-              Protect your investments with real-time risk analysis.
-            </p>
-            {/* Social Links */}
-            <div className="flex items-center gap-3">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={clsx(
-                    'p-2 rounded-lg transition-colors',
-                    'text-text-muted hover:text-text-primary',
-                    'hover:bg-background-hover'
-                  )}
-                  aria-label={social.label}
-                >
-                  {social.icon}
-                </a>
-              ))}
+              <span className="text-xl font-bold">Vortex</span>
             </div>
+            <p className="text-neutral-400 text-sm">
+              Advanced token security scanner powered by AI
+            </p>
           </div>
-
-          {/* Product Links */}
+          
+          {/* Product */}
           <div>
-            <h4 className="text-sm font-semibold text-text-primary mb-4">Product</h4>
-            <ul className="space-y-2">
-              {footerLinks.product.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+            <h3 className="font-semibold mb-4">Product</h3>
+            <ul className="space-y-2 text-sm text-neutral-400">
+              <li>
+                <Link to="/dashboard" className="hover:text-white transition">
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/portfolio" className="hover:text-white transition">
+                  Portfolio
+                </Link>
+              </li>
+              <li>
+                <Link to="/watchlist" className="hover:text-white transition">
+                  Watchlist
+                </Link>
+              </li>
             </ul>
           </div>
-
-          {/* Resources Links */}
+          
+          {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold text-text-primary mb-4">Resources</h4>
-            <ul className="space-y-2">
-              {footerLinks.resources.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+            <h3 className="font-semibold mb-4">Resources</h3>
+            <ul className="space-y-2 text-sm text-neutral-400">
+              <li>
+                <a href="https://docs.vortex.protocol" className="hover:text-white transition" target="_blank" rel="noopener noreferrer">
+                  Documentation
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/2049foto/Vortex" className="hover:text-white transition" target="_blank" rel="noopener noreferrer">
+                  GitHub
+                </a>
+              </li>
+              <li>
+                <Link to="/settings" className="hover:text-white transition">
+                  Settings
+                </Link>
+              </li>
             </ul>
           </div>
-
-          {/* Legal Links */}
+          
+          {/* Legal */}
           <div>
-            <h4 className="text-sm font-semibold text-text-primary mb-4">Legal</h4>
-            <ul className="space-y-2">
-              {footerLinks.legal.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+            <h3 className="font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2 text-sm text-neutral-400">
+              <li>
+                <a href="/security" className="hover:text-white transition">
+                  Security
+                </a>
+              </li>
+              <li>
+                <a href="/privacy" className="hover:text-white transition">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="/terms" className="hover:text-white transition">
+                  Terms
+                </a>
+              </li>
             </ul>
           </div>
         </div>
-
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-border">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-text-muted">
-              © {currentYear} Vortex Protocol. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-2 text-xs text-text-muted">
-                <span className="w-2 h-2 bg-success-light rounded-full animate-pulse" />
-                All systems operational
-              </span>
-            </div>
-          </div>
+        
+        <div className="mt-8 pt-8 border-t border-neutral-800 text-center text-sm text-neutral-400">
+          <p>© 2026 Vortex Protocol. Built on Base.</p>
         </div>
       </div>
     </footer>
   );
 }
-
-export default Footer;
 

@@ -1,265 +1,131 @@
 /**
- * Watchlist page for Vortex Protocol
+ * Watchlist Page - Saved tokens management
  */
 
-import React, { useEffect, useState } from 'react';
-import { clsx } from 'clsx';
-import { Plus, Search, RefreshCw } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input, SearchInput, AddressInput } from '@/components/ui/Input';
-import { ChainSelect } from '@/components/ui/Select';
-import { Modal } from '@/components/ui/Modal';
-import { WatchlistCard, WatchlistEmpty } from '@/components/features/WatchlistCard';
-import { SkeletonCard } from '@/components/ui/Skeleton';
+import { Badge } from '@/components/ui/Badge';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Layout } from '@/components/layout';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { watchlistApi } from '@/lib/api';
-import { isValidEvmAddress } from '@/lib/validators';
-import type { WatchlistItem, Chain } from '@/types';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
-/**
- * Watchlist page component
- */
-export default function Watchlist(): React.ReactElement {
-  const [items, setItems] = useState<WatchlistItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-
-  // Add form state
-  const [addAddress, setAddAddress] = useState('');
-  const [addChain, setAddChain] = useState<Chain>('base');
-  const [addSymbol, setAddSymbol] = useState('');
-  const [addName, setAddName] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-  const [addError, setAddError] = useState<string | null>(null);
-
-  const fetchWatchlist = async () => {
-    setIsLoading(true);
-    try {
-      const response = await watchlistApi.getAll();
-      if (response.success && response.data) {
-        setItems(response.data);
-      }
-    } catch (error) {
-      toast.error('Failed to load watchlist');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+export default function Watchlist() {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/');
+      return;
+    }
+    
+    const fetchWatchlist = async () => {
+      try {
+        const response = await watchlistApi.getAll();
+        if (response.success && response.data) {
+          setWatchlist(response.data);
+        }
+      } catch (error) {
+        toast.error('Failed to load watchlist');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchWatchlist();
-  }, []);
-
+  }, [isAuthenticated, navigate]);
+  
   const handleRemove = async (id: string) => {
-    setRemovingId(id);
     try {
       await watchlistApi.remove(id);
-      setItems((prev) => prev.filter((item) => item.id !== id));
-      toast.success('Token removed from watchlist');
-    } catch {
+      setWatchlist(watchlist.filter((item) => item.id !== id));
+      toast.success('Removed from watchlist');
+    } catch (error) {
       toast.error('Failed to remove token');
-    } finally {
-      setRemovingId(null);
     }
   };
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAddError(null);
-
-    if (!addAddress.trim()) {
-      setAddError('Please enter a token address');
-      return;
-    }
-
-    if (!isValidEvmAddress(addAddress)) {
-      setAddError('Invalid address format');
-      return;
-    }
-
-    setIsAdding(true);
-    try {
-      const response = await watchlistApi.add({
-        tokenAddress: addAddress,
-        chain: addChain,
-        symbol: addSymbol || 'UNKNOWN',
-        name: addName || 'Unknown Token',
-      });
-
-      if (response.success && response.data) {
-        // Refresh the list
-        await fetchWatchlist();
-        toast.success('Token added to watchlist');
-        setShowAddModal(false);
-        resetAddForm();
-      }
-    } catch {
-      setAddError('Failed to add token. It might already be in your watchlist.');
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const resetAddForm = () => {
-    setAddAddress('');
-    setAddChain('base');
-    setAddSymbol('');
-    setAddName('');
-    setAddError(null);
-  };
-
-  const filteredItems = items.filter((item) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      item.symbol.toLowerCase().includes(query) ||
-      item.name.toLowerCase().includes(query) ||
-      item.tokenAddress.toLowerCase().includes(query)
-    );
-  });
-
+  
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Watchlist</h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Track your favorite tokens and get quick access to their security info.
-          </p>
+    <Layout>
+      <div className="min-h-screen bg-neutral-50">
+        {/* Header */}
+        <div className="bg-white border-b border-neutral-200">
+          <div className="container mx-auto px-6 py-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-neutral-900 mb-2">Watchlist</h1>
+                <p className="text-neutral-600">Manage your saved tokens</p>
+              </div>
+              <Button variant="primary" onClick={() => navigate('/dashboard')}>
+                Add Token
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={fetchWatchlist}
-            isLoading={isLoading}
-            leftIcon={<RefreshCw className="w-4 h-4" />}
-          >
-            Refresh
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowAddModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Add Token
-          </Button>
+        
+        {/* Main Content */}
+        <div className="container mx-auto px-6 py-8">
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} padding="lg">
+                  <Skeleton height="1.5rem" className="mb-4" />
+                  <Skeleton height="1rem" />
+                </Card>
+              ))}
+            </div>
+          ) : watchlist.length === 0 ? (
+            <Card padding="lg" className="text-center py-12">
+              <p className="text-neutral-600 mb-4">Your watchlist is empty</p>
+              <Button variant="primary" onClick={() => navigate('/dashboard')}>
+                Start Adding Tokens
+              </Button>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {watchlist.map((item) => (
+                <Card key={item.id} padding="lg" hover>
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-neutral-900 mb-1">
+                        {item.symbol || 'Unknown'}
+                      </h3>
+                      <p className="text-sm text-neutral-600">{item.name}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemove(item.id)}
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Badge variant="info">{item.chain}</Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/token/${item.tokenAddress}?chain=${item.chain}`)}
+                    >
+                      View Details →
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Search */}
-      {items.length > 0 && (
-        <SearchInput
-          placeholder="Search by symbol, name, or address..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          fullWidth
-        />
-      )}
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && items.length === 0 && <WatchlistEmpty />}
-
-      {/* No Results */}
-      {!isLoading && items.length > 0 && filteredItems.length === 0 && (
-        <div className="text-center py-12">
-          <Search className="w-12 h-12 text-text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-text-primary mb-2">
-            No tokens found
-          </h3>
-          <p className="text-sm text-text-secondary">
-            Try a different search term.
-          </p>
-        </div>
-      )}
-
-      {/* Watchlist Grid */}
-      {!isLoading && filteredItems.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredItems.map((item) => (
-            <WatchlistCard
-              key={item.id}
-              item={item}
-              onRemove={handleRemove}
-              isRemoving={removingId === item.id}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Add Token Modal */}
-      <Modal
-        isOpen={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          resetAddForm();
-        }}
-        title="Add to Watchlist"
-        description="Add a token to track its security status."
-      >
-        <form onSubmit={handleAdd} className="space-y-4">
-          <AddressInput
-            label="Token Address"
-            placeholder="0x..."
-            value={addAddress}
-            onChange={(e) => setAddAddress(e.target.value)}
-            error={addError || undefined}
-            fullWidth
-          />
-
-          <ChainSelect
-            label="Chain"
-            value={addChain}
-            onChange={(e) => setAddChain(e.target.value as Chain)}
-            fullWidth
-          />
-
-          <Input
-            label="Symbol (optional)"
-            placeholder="e.g., PEPE"
-            value={addSymbol}
-            onChange={(e) => setAddSymbol(e.target.value)}
-            fullWidth
-          />
-
-          <Input
-            label="Name (optional)"
-            placeholder="e.g., Pepe Token"
-            value={addName}
-            onChange={(e) => setAddName(e.target.value)}
-            fullWidth
-          />
-
-          <div className="flex items-center justify-end gap-3 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setShowAddModal(false);
-                resetAddForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={isAdding}>
-              Add Token
-            </Button>
-          </div>
-        </form>
-      </Modal>
-    </div>
+    </Layout>
   );
 }
 

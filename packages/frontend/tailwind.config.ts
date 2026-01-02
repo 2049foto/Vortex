@@ -2,82 +2,66 @@ import type { Config } from 'tailwindcss';
 
 /**
  * TailwindCSS configuration for Vortex Protocol
- * Dark mode first design with custom color palette
+ * Base-inspired light mode minimalism
  */
 const config: Config = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Primary brand colors
+        // Primary brand colors (Base blue)
         primary: {
-          50: '#e6fffa',
-          100: '#b2f5ea',
-          200: '#81e6d9',
-          300: '#4fd1c5',
-          400: '#38b2ac',
-          500: '#319795',
-          600: '#2c7a7b',
-          700: '#285e61',
-          800: '#234e52',
-          900: '#1d4044',
-          950: '#0d2d2d',
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#3B82F6',
+          600: '#2563EB',
+          700: '#1D4ED8',
+          800: '#1E40AF',
+          900: '#1E3A8A',
         },
-        // Accent colors
-        accent: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+        // Neutrals (warm gray)
+        neutral: {
+          0: '#FFFFFF',
+          50: '#FAFAF9',
+          100: '#F5F5F4',
+          200: '#E7E5E4',
+          300: '#D6D3D1',
+          400: '#A8A29E',
+          500: '#78716C',
+          600: '#57534E',
+          700: '#44403C',
+          800: '#292524',
+          900: '#1C1917',
         },
-        // Background colors
-        background: {
-          dark: '#0a0a0f',
-          card: '#12121a',
-          elevated: '#1a1a24',
-          hover: '#22222e',
-        },
-        // Status colors
+        // Semantic colors
         success: {
-          light: '#10b981',
-          DEFAULT: '#059669',
-          dark: '#047857',
+          DEFAULT: '#10B981',
+          light: '#34D399',
+          dark: '#059669',
         },
         warning: {
-          light: '#fbbf24',
-          DEFAULT: '#f59e0b',
-          dark: '#d97706',
+          DEFAULT: '#F59E0B',
+          light: '#FBBF24',
+          dark: '#D97706',
         },
         danger: {
-          light: '#f87171',
-          DEFAULT: '#ef4444',
-          dark: '#dc2626',
+          DEFAULT: '#EF4444',
+          light: '#F87171',
+          dark: '#DC2626',
         },
-        // Text colors
-        text: {
-          primary: '#f8fafc',
-          secondary: '#94a3b8',
-          muted: '#64748b',
-          disabled: '#475569',
-        },
-        // Border colors
-        border: {
-          DEFAULT: '#1e293b',
-          light: '#334155',
-          focus: '#38b2ac',
+        info: {
+          DEFAULT: '#3B82F6',
+          light: '#60A5FA',
+          dark: '#2563EB',
         },
       },
       fontFamily: {
-        sans: ['Satoshi', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        display: ['"SF Pro Display"', 'system-ui', '-apple-system', 'sans-serif'],
+        body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
@@ -92,57 +76,42 @@ const config: Config = {
         '4xl': '2rem',
       },
       boxShadow: {
-        'glow-sm': '0 0 10px rgba(56, 178, 172, 0.2)',
-        'glow-md': '0 0 20px rgba(56, 178, 172, 0.3)',
-        'glow-lg': '0 0 30px rgba(56, 178, 172, 0.4)',
-        'inner-glow': 'inset 0 0 20px rgba(56, 178, 172, 0.1)',
+        'glow': '0 0 30px rgba(59, 130, 246, 0.15)',
+        'glow-sm': '0 0 10px rgba(59, 130, 246, 0.1)',
+        'glow-md': '0 0 20px rgba(59, 130, 246, 0.2)',
+        'glow-lg': '0 0 30px rgba(59, 130, 246, 0.3)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
-        'fade-up': 'fadeUp 0.4s ease-out',
-        'slide-in': 'slideIn 0.3s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
+        'fade-in': 'fade-in 0.6s ease-out',
+        'float': 'float 3s ease-in-out infinite',
+        'slide-in-right': 'slide-in-right 0.4s ease-out',
+        'scale-in': 'scale-in 0.3s ease-out',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'shimmer': 'shimmer 2s linear infinite',
-        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        fadeUp: {
+        'fade-in': {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        slideIn: {
-          '0%': { opacity: '0', transform: 'translateX(-10px)' },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'slide-in-right': {
+          '0%': { opacity: '0', transform: 'translateX(100%)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
-        slideDown: {
-          '0%': { opacity: '0', transform: 'translateY(-10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        scaleIn: {
+        'scale-in': {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
         },
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'mesh-gradient': 'linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #0a0a0f 100%)',
       },
       backdropBlur: {
         xs: '2px',
-      },
-      transitionDuration: {
-        '400': '400ms',
       },
     },
   },
@@ -150,4 +119,3 @@ const config: Config = {
 };
 
 export default config;
-
