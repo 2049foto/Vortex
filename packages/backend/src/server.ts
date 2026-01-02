@@ -1,74 +1,75 @@
-/**
- * Vortex Protocol Backend Server
- * Bun + Hono API Server
- */
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
-import { Hono } from 'hono';
-import { config } from './lib/config';
-import { corsMiddleware } from './middleware/cors';
-import { loggerMiddleware } from './middleware/logger';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { logger } from './lib/logger';
-
-// API Routes
-import health from './api/health/health';
-import auth from './api/auth/auth';
-import scan from './api/scan/scan';
-import portfolio from './api/portfolio/portfolio';
-import watchlist from './api/watchlist/watchlist';
-import alerts from './api/alerts/alerts';
-import cacheApi from './api/cache/cache';
-
-/**
- * Create and configure Hono app
- */
 const app = new Hono();
 
-// Global middleware
-app.use('*', loggerMiddleware());
-app.use('*', corsMiddleware);
+// CORS
+app.use("*", cors({
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://vortex-frontend.vercel.app",
+    "*"
+  ],
+  credentials: true
+}));
 
-// Error handling
-app.onError(errorHandler);
-app.notFound(notFoundHandler);
-
-// Mount API routes
-app.route('/api/health', health);
-app.route('/api/auth', auth);
-app.route('/api/scan', scan);
-app.route('/api/portfolio', portfolio);
-app.route('/api/watchlist', watchlist);
-app.route('/api/alerts', alerts);
-app.route('/api/cache', cacheApi);
-
-// Root route
-app.get('/', (c) => {
+// Health Check (Critical)
+app.get("/api/health", (c) => {
   return c.json({
-    name: 'Vortex Protocol API',
-    version: '1.0.0',
-    status: 'running',
-    docs: '/api/health',
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || "production"
   });
 });
 
-/**
- * Start server with Bun.serve
- */
-const port = config.port;
-
-// Use structured logger for server startup
-logger.info('Vortex Protocol API Server starting', {
-  environment: config.env,
-  port,
-  url: `http://localhost:${port}`,
+// Chains endpoint
+app.get("/api/chains", (c) => {
+  const chains = [
+    { id: 56, name: "BSC" },
+    { id: 8453, name: "Base" },
+    { id: 42161, name: "Arbitrum" },
+    { id: 137, name: "Polygon" },
+    { id: 1, name: "Ethereum" },
+    { id: 43114, name: "Avalanche" },
+    { id: 10, name: "Optimism" },
+    { id: 838592, name: "Monad" },
+    { id: "solana", name: "Solana" }
+  ];
+  return c.json(chains);
 });
 
-// Export for Bun
-export default {
-  port,
-  fetch: app.fetch,
-};
+// Scan endpoint (Minimal working version)
+app.post("/api/scan", async (c) => {
+  try {
+    const { address } = await c.req.json();
+    
+    if (!address || !address.startsWith("0x")) {
+      return c.json({ error: "Invalid address" }, 400);
+    }
+    
+    // Simulate scan (replace with real logic later)
+    const mockTokens = [
+      {
+        address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        symbol: "USDC",
+        chain: "Base",
+        balance: "1000",
+        usdValue: 1000,
+        category: "premium"
+      }
+    ];
+    
+    return c.json({
+      scanId: Date.now().toString(),
+      tokens: mockTokens,
+      summary: { totalValue: 1000, premium: 1, dust: 0, risk: 0 }
+    });
+  } catch (error) {
+    console.error("Scan error:", error);
+    return c.json({ error: "Scan failed" }, 500);
+  }
+});
 
-// Also export for testing
-export { app };
-
+// Export for Vercel (NO Bun code)
+export default app;
