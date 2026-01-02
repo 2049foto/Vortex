@@ -1,0 +1,53 @@
+/**
+ * Mobile Optimizations
+ * 48px tap targets, card stack, swipe actions
+ */
+
+/* Ensure 48px minimum tap targets */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Card stack layout for mobile */
+  .card-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  /* Swipe actions */
+  .swipeable-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .swipe-actions {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .swipeable-card:hover .swipe-actions {
+    opacity: 1;
+  }
+}
+
+/* Touch-friendly spacing */
+@media (pointer: coarse) {
+  .touch-target {
+    padding: 0.75rem 1rem;
+  }
+}
+
