@@ -1,104 +1,119 @@
 /**
- * Modal Component - Animated with backdrop
+ * Premium Modal Component
+ * Animated dialog with backdrop
  */
 
-import { useEffect } from 'react';
-import { Card } from './Card';
-import { Button } from './Button';
+import React, { useEffect, useCallback } from 'react';
+import { cn } from '@/lib/utils';
+
+type Size = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  size?: Size;
   title?: string;
+  description?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  showCloseButton?: boolean;
+  showClose?: boolean;
+  preventClose?: boolean;
 }
 
 export function Modal({
   isOpen,
   onClose,
-  title,
-  children,
   size = 'md',
-  showCloseButton = true,
+  title,
+  description,
+  children,
+  showClose = true,
+  preventClose = false,
 }: ModalProps) {
+  // Close on escape key
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !preventClose) {
+      onClose();
+    }
+  }, [onClose, preventClose]);
+
   useEffect(() => {
     if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
     }
-    
     return () => {
-      document.body.style.overflow = '';
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
-  
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-    
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen, onClose]);
-  
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen) return null;
-  
-  const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
+
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    full: 'max-w-4xl',
   };
-  
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-fade-in" />
-      
+      <div
+        className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={preventClose ? undefined : onClose}
+      />
+
       {/* Modal */}
-      <Card
-        variant="elevated"
-        padding="lg"
-        className={`${sizes[size]} w-full relative z-10 animate-scale-in`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between mb-6">
-            {title && (
-              <h2 className="text-2xl font-bold text-neutral-900">{title}</h2>
-            )}
-            {showCloseButton && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="ml-auto"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </Button>
-            )}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div
+          className={cn(
+            'relative w-full bg-white rounded-2xl shadow-2xl',
+            'animate-in zoom-in-95 slide-in-from-bottom-4 duration-200',
+            sizeClasses[size]
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          {showClose && !preventClose && (
+            <button
+              onClick={onClose}
+              className="absolute right-4 top-4 p-2 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+
+          {/* Header */}
+          {(title || description) && (
+            <div className="px-6 pt-6 pb-4">
+              {title && (
+                <h2 className="text-xl font-bold text-neutral-900">{title}</h2>
+              )}
+              {description && (
+                <p className="text-sm text-neutral-500 mt-1">{description}</p>
+              )}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className={cn('px-6 pb-6', !title && 'pt-6')}>
+            {children}
           </div>
-        )}
-        
-        {/* Content */}
-        <div>{children}</div>
-      </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Modal Footer
+export function ModalFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn('flex items-center justify-end gap-3 pt-4 border-t border-neutral-100 mt-4', className)} {...props}>
+      {children}
     </div>
   );
 }

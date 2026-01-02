@@ -1,70 +1,78 @@
 /**
- * Input Component - Base-inspired
+ * Premium Input Component
+ * Professional form input with validation states
  */
 
-import { forwardRef } from 'react';
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
-  icon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   fullWidth?: boolean;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ 
-    label,
-    error,
-    hint,
-    icon,
-    fullWidth = false,
-    className = '',
-    ...props 
-  }, ref) => {
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, label, error, hint, leftIcon, rightIcon, fullWidth, type = 'text', ...props }, ref) => {
     return (
-      <div className={`${fullWidth ? 'w-full' : ''}`}>
+      <div className={cn('space-y-2', fullWidth && 'w-full')}>
         {label && (
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
+          <label className="block text-sm font-semibold text-neutral-700">
             {label}
           </label>
         )}
-        
+
         <div className="relative">
-          {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-              {icon}
+          {leftIcon && (
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
+              {leftIcon}
             </div>
           )}
-          
+
           <input
             ref={ref}
-            className={`
-              w-full px-4 py-3 ${icon ? 'pl-10' : ''}
-              bg-white border border-neutral-200
-              rounded-xl
-              text-neutral-900 placeholder-neutral-400
-              transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              hover:border-neutral-300
-              disabled:bg-neutral-50 disabled:cursor-not-allowed
-              ${error ? 'border-red-500 focus:ring-red-500' : ''}
-              ${className}
-            `}
+            type={type}
+            className={cn(
+              // Base
+              'w-full px-4 py-3 rounded-xl text-neutral-900',
+              'bg-white border-2 border-neutral-200',
+              'placeholder:text-neutral-400',
+              'transition-all duration-150',
+              
+              // Focus
+              'focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10',
+              
+              // Hover
+              'hover:border-neutral-300',
+              
+              // Error
+              error && 'border-red-400 focus:border-red-500 focus:ring-red-500/10',
+              
+              // Disabled
+              'disabled:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60',
+
+              // Icons
+              leftIcon && 'pl-11',
+              rightIcon && 'pr-11',
+
+              className
+            )}
             {...props}
           />
+
+          {rightIcon && (
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400">
+              {rightIcon}
+            </div>
+          )}
         </div>
-        
-        {hint && !error && (
-          <p className="mt-2 text-sm text-neutral-500">{hint}</p>
-        )}
-        
-        {error && (
-          <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            {error}
+
+        {(error || hint) && (
+          <p className={cn('text-sm', error ? 'text-red-500' : 'text-neutral-500')}>
+            {error || hint}
           </p>
         )}
       </div>
@@ -73,4 +81,50 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
+
+// Textarea variant
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+  hint?: string;
+  fullWidth?: boolean;
+}
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, label, error, hint, fullWidth, ...props }, ref) => {
+    return (
+      <div className={cn('space-y-2', fullWidth && 'w-full')}>
+        {label && (
+          <label className="block text-sm font-semibold text-neutral-700">
+            {label}
+          </label>
+        )}
+
+        <textarea
+          ref={ref}
+          className={cn(
+            'w-full px-4 py-3 rounded-xl text-neutral-900',
+            'bg-white border-2 border-neutral-200',
+            'placeholder:text-neutral-400',
+            'transition-all duration-150 resize-none',
+            'focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10',
+            'hover:border-neutral-300',
+            error && 'border-red-400 focus:border-red-500 focus:ring-red-500/10',
+            'disabled:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60',
+            className
+          )}
+          {...props}
+        />
+
+        {(error || hint) && (
+          <p className={cn('text-sm', error ? 'text-red-500' : 'text-neutral-500')}>
+            {error || hint}
+          </p>
+        )}
+      </div>
+    );
+  }
+);
+
+Textarea.displayName = 'Textarea';
 

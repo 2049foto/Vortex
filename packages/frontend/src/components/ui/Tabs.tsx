@@ -1,143 +1,114 @@
 /**
- * Tabs Component - Tab navigation with controlled/uncontrolled modes
+ * Premium Tabs Component
+ * Animated tab navigation
  */
 
-import { useState, createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface TabsContextValue {
   activeTab: string;
-  setActiveTab: (value: string) => void;
+  setActiveTab: (tab: string) => void;
 }
 
-const TabsContext = createContext<TabsContextValue | null>(null);
+const TabsContext = createContext<TabsContextValue | undefined>(undefined);
 
 function useTabsContext() {
   const context = useContext(TabsContext);
-  if (!context) {
-    throw new Error('Tabs components must be used within a Tabs provider');
-  }
+  if (!context) throw new Error('Tabs components must be used within a Tabs provider');
   return context;
 }
 
 interface TabsProps {
-  defaultValue?: string;
-  value?: string;
-  onValueChange?: (value: string) => void;
+  defaultTab: string;
   children: React.ReactNode;
   className?: string;
+  onChange?: (tab: string) => void;
 }
 
-export function Tabs({
-  defaultValue,
-  value,
-  onValueChange,
-  children,
-  className = '',
-}: TabsProps) {
-  const [internalValue, setInternalValue] = useState(defaultValue ?? '');
-  
-  const isControlled = value !== undefined;
-  const activeTab = isControlled ? value : internalValue;
-  
-  const setActiveTab = useCallback((newValue: string) => {
-    if (!isControlled) {
-      setInternalValue(newValue);
-    }
-    onValueChange?.(newValue);
-  }, [isControlled, onValueChange]);
-  
+export function Tabs({ defaultTab, children, className, onChange }: TabsProps) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const handleSetActiveTab = (tab: string) => {
+    setActiveTab(tab);
+    onChange?.(tab);
+  };
+
   return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
-      <div className={className}>
-        {children}
-      </div>
+    <TabsContext.Provider value={{ activeTab, setActiveTab: handleSetActiveTab }}>
+      <div className={cn('w-full', className)}>{children}</div>
     </TabsContext.Provider>
   );
 }
 
-interface TabsListProps {
+// Tab List
+interface TabListProps {
   children: React.ReactNode;
   className?: string;
 }
 
-export function TabsList({ children, className = '' }: TabsListProps) {
+export function TabList({ children, className }: TabListProps) {
   return (
     <div
+      className={cn(
+        'flex items-center gap-1 p-1 bg-neutral-100 rounded-xl',
+        className
+      )}
       role="tablist"
-      className={`
-        inline-flex items-center gap-1 p-1
-        bg-neutral-100 rounded-xl
-        ${className}
-      `}
     >
       {children}
     </div>
   );
 }
 
-interface TabsTriggerProps {
+// Tab Trigger
+interface TabTriggerProps {
   value: string;
   children: React.ReactNode;
-  disabled?: boolean;
   className?: string;
+  icon?: React.ReactNode;
 }
 
-export function TabsTrigger({
-  value,
-  children,
-  disabled = false,
-  className = '',
-}: TabsTriggerProps) {
+export function TabTrigger({ value, children, className, icon }: TabTriggerProps) {
   const { activeTab, setActiveTab } = useTabsContext();
   const isActive = activeTab === value;
-  
+
   return (
     <button
       role="tab"
       aria-selected={isActive}
-      aria-controls={`tabpanel-${value}`}
-      disabled={disabled}
       onClick={() => setActiveTab(value)}
-      className={`
-        px-4 py-2 text-sm font-medium rounded-lg
-        transition-all duration-200
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${isActive
+      className={cn(
+        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold',
+        'transition-all duration-150',
+        isActive
           ? 'bg-white text-neutral-900 shadow-sm'
-          : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
-        }
-        ${className}
-      `}
+          : 'text-neutral-600 hover:text-neutral-900 hover:bg-white/50',
+        className
+      )}
     >
+      {icon}
       {children}
     </button>
   );
 }
 
-interface TabsContentProps {
+// Tab Content
+interface TabContentProps {
   value: string;
   children: React.ReactNode;
   className?: string;
 }
 
-export function TabsContent({
-  value,
-  children,
-  className = '',
-}: TabsContentProps) {
+export function TabContent({ value, children, className }: TabContentProps) {
   const { activeTab } = useTabsContext();
-  
-  if (activeTab !== value) {
-    return null;
-  }
-  
+
+  if (activeTab !== value) return null;
+
   return (
     <div
       role="tabpanel"
-      id={`tabpanel-${value}`}
-      aria-labelledby={`tab-${value}`}
-      className={`mt-4 animate-fade-in ${className}`}
+      className={cn('animate-in fade-in-50 duration-200 mt-4', className)}
     >
       {children}
     </div>

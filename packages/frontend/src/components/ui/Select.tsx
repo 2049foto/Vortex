@@ -1,74 +1,128 @@
 /**
- * Select Component
+ * Premium Select Component
+ * Custom dropdown with search
  */
 
-import { forwardRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  fullWidth?: boolean;
-  options: Array<{ value: string; label: string }>;
+interface Option {
+  value: string;
+  label: string;
+  icon?: React.ReactNode;
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ 
-    label,
-    error,
-    hint,
-    fullWidth = false,
-    options,
-    className = '',
-    ...props 
-  }, ref) => {
-    return (
-      <div className={`${fullWidth ? 'w-full' : ''}`}>
-        {label && (
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
-            {label}
-          </label>
-        )}
-        
-        <select
-          ref={ref}
-          className={`
-            w-full px-4 py-3
-            bg-white border border-neutral-200
-            rounded-xl
-            text-neutral-900
-            transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            hover:border-neutral-300
-            disabled:bg-neutral-50 disabled:cursor-not-allowed
-            ${error ? 'border-red-500 focus:ring-red-500' : ''}
-            ${className}
-          `}
-          {...props}
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        
-        {hint && !error && (
-          <p className="mt-2 text-sm text-neutral-500">{hint}</p>
-        )}
-        
-        {error && (
-          <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            {error}
-          </p>
-        )}
-      </div>
-    );
-  }
-);
+interface SelectProps {
+  options: Option[];
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  label?: string;
+  error?: string;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  className?: string;
+}
 
-Select.displayName = 'Select';
+export function Select({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select...',
+  label,
+  error,
+  disabled,
+  fullWidth,
+  className,
+}: SelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selected = options.find(opt => opt.value === value);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} className={cn('relative', fullWidth && 'w-full', className)}>
+      {label && (
+        <label className="block text-sm font-semibold text-neutral-700 mb-2">
+          {label}
+        </label>
+      )}
+
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={cn(
+          'w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl',
+          'bg-white border-2 border-neutral-200 text-left',
+          'transition-all duration-150',
+          'hover:border-neutral-300',
+          'focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10',
+          isOpen && 'border-sky-500 ring-4 ring-sky-500/10',
+          error && 'border-red-400',
+          disabled && 'opacity-50 cursor-not-allowed'
+        )}
+      >
+        <span className={cn('flex items-center gap-2', !selected && 'text-neutral-400')}>
+          {selected?.icon}
+          {selected?.label || placeholder}
+        </span>
+        <svg
+          className={cn('w-5 h-5 text-neutral-400 transition-transform', isOpen && 'rotate-180')}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-2 bg-white rounded-xl border border-neutral-200 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="max-h-60 overflow-y-auto py-1">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  'w-full flex items-center gap-2 px-4 py-2.5 text-left',
+                  'transition-colors duration-100',
+                  option.value === value
+                    ? 'bg-sky-50 text-sky-700'
+                    : 'text-neutral-700 hover:bg-neutral-50'
+                )}
+              >
+                {option.icon}
+                {option.label}
+                {option.value === value && (
+                  <svg className="w-4 h-4 ml-auto" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+    </div>
+  );
+}
 

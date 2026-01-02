@@ -1,114 +1,70 @@
 /**
- * Main App component with routing for Vortex Protocol
+ * Vortex Protocol - Main App Component
+ * Premium routing and layout
  */
 
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { useAuthStore } from '@/stores/auth';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from '@/components/layout';
+import { Loader } from '@/components/ui';
 
 // Lazy load pages for code splitting
-const Home = lazy(() => import('@/pages/Home'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Portfolio = lazy(() => import('@/pages/Portfolio'));
-const TokenDetail = lazy(() => import('@/pages/TokenDetail'));
-const Watchlist = lazy(() => import('@/pages/Watchlist'));
-const Settings = lazy(() => import('@/pages/Settings'));
+const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })));
+const Dashboard = lazy(() => import('@/pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Portfolio = lazy(() => import('@/pages/Portfolio').then(m => ({ default: m.Portfolio })));
+const TokenDetail = lazy(() => import('@/pages/TokenDetail').then(m => ({ default: m.TokenDetail })));
+const Watchlist = lazy(() => import('@/pages/Watchlist').then(m => ({ default: m.Watchlist })));
+const Settings = lazy(() => import('@/pages/Settings').then(m => ({ default: m.Settings })));
 
-/**
- * Loading fallback component
- */
-function PageLoader(): React.ReactElement {
+// Loading fallback
+function PageLoader() {
   return (
-    <div className="min-h-screen bg-neutral-50 p-8 space-y-6">
-      <Skeleton height="3rem" className="mb-6" />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Skeleton height="8rem" />
-        <Skeleton height="8rem" />
-        <Skeleton height="8rem" />
-      </div>
-      <Skeleton height="24rem" />
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader text="Loading..." />
     </div>
   );
 }
 
-/**
- * Protected Route wrapper
- */
-function ProtectedRoute({ children }: { children: React.ReactNode }): React.ReactElement {
-  const { isAuthenticated } = useAuthStore();
-
-  // For now, allow access even without authentication
-  // In production, redirect to login
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/" replace />;
-  // }
-
-  return <>{children}</>;
-}
-
-/**
- * App component
- */
-function App(): React.ReactElement {
+export function App() {
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+    <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public Home (no footer for cleaner landing) */}
+          <Route
+            path="/"
+            element={
+              <Layout showFooter={true}>
+                <Home />
+              </Layout>
+            }
+          />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+          {/* App Routes with Layout */}
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/scanner" element={<TokenDetail />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
 
-        <Route
-          path="/portfolio"
-          element={
-            <ProtectedRoute>
-              <Portfolio />
-            </ProtectedRoute>
-          }
-        />
+          {/* Auth Route (placeholder) */}
+          <Route
+            path="/auth"
+            element={
+              <Layout showFooter={false}>
+                <Dashboard />
+              </Layout>
+            }
+          />
 
-        <Route
-          path="/token/:address"
-          element={
-            <ProtectedRoute>
-              <TokenDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/watchlist"
-          element={
-            <ProtectedRoute>
-              <Watchlist />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Fallback - redirect to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Suspense>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   );
 }
 
 export default App;
-
