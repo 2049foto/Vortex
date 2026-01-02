@@ -1,0 +1,13 @@
+﻿cbd74ac fix(vercel): use bun and cd into packages/frontend directly
+0936367 docs: add S++ completion report
+7c51e37 feat: S++ complete implementation - 9-chain scanner + gamification + batch actions
+c2ecb16 feat: Premium 10/10 UI/UX redesign - Linear/Stripe/Base inspired - 20+ components, 6 pages, design tokens, glassmorphism, animations
+ae4a04b fix(vercel): switch from bun to npm for Vercel compatibility
+ba54e3a docs: add implementation audit - 96% docs-to-code alignment
+944360e feat: complete S+ production audit (92/100)
+2872304 feat: complete UI redesign - Base-inspired light mode minimalism
+cca7433 feat: Integrate complete environment variables configuration
+7546ea0 docs: Add comprehensive project structure documentation
+1c89373 docs: Final production audit report - 96/100 APPROVED
+c6bb4d0 fix: Production audit fixes - 0 TS errors, 74 tests pass, build successful
+2f75ef2 feat: Vortex Protocol v1.0.0 - Production ready for Farcaster + Base Grant

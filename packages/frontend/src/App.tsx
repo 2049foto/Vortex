@@ -7,6 +7,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout';
 import { Loader } from '@/components/ui';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import('@/pages/Home').then(m => ({ default: m.Home })));
@@ -27,9 +28,10 @@ function PageLoader() {
 
 export function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Public Home (no footer for cleaner landing) */}
           <Route
             path="/"
@@ -64,6 +66,7 @@ export function App() {
         </Routes>
       </Suspense>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

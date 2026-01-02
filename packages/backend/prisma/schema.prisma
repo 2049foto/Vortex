@@ -27,6 +27,8 @@ model User {
   achievements UserAchievement[]
   watchlist    Watchlist[]
   alerts       Alert[]
+  portfolios   Portfolio[]
+  scanHistory  ScanHistory[]
 
   @@index([walletAddress])
 }
@@ -153,5 +155,54 @@ model Alert {
 
   @@index([userId, enabled])
   @@index([token])
+}
+
+// ============================================
+// Portfolio Model
+// ============================================
+model Portfolio {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenAddress  String
+  chain         String
+  symbol        String
+  name          String
+  balance       String   // Wei format as string for precision
+  balanceFormatted Float
+  priceUSD      Float
+  valueUSD      Float
+  riskScore     Int      @default(0)
+  category      String   // PREMIUM, DUST, MICRO, RISK
+  lastUpdated   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, tokenAddress, chain])
+  @@index([userId])
+  @@index([chain, category])
+}
+
+// ============================================
+// Scan History Model
+// ============================================
+model ScanHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address       String   // Scanned wallet address
+  chain         String?
+  tokensFound   Int      @default(0)
+  totalValue    Float    @default(0)
+  premiumCount  Int      @default(0)
+  dustCount     Int      @default(0)
+  microCount    Int      @default(0)
+  riskCount     Int      @default(0)
+  scanDuration  Int      // milliseconds
+  cached        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([address])
+  @@index([createdAt])
 }
 

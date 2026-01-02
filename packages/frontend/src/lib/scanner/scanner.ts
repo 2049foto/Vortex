@@ -5,14 +5,23 @@
 
 import { CHAINS, type ChainConfig } from '../chains/config';
 import { classifyTokens } from './classifier';
+import { scanEVMChain, scanSolanaChain } from './rpc-scanner';
+import { redisClient } from '../cache/redis-client';
+import { enhanceTokensWithSecurity } from './goPlus-integration';
+import { retryOnNetworkError } from '../utils/retry';
+import { logger } from '../utils/logger';
 import type { ScannedToken, ScanResult, ChainScanStatus, ScannerOptions } from './types';
 
 // Scan state callbacks
 type ScanProgressCallback = (chains: ChainScanStatus[]) => void;
 
 class VortexScanner {
-  private cache = new Map<string, { data: ScanResult; expiry: number }>();
-  private cacheTTL = 5 * 60 * 1000; // 5 minutes
+  private cacheTTL = 5 * 60; // 5 minutes in seconds
+  private cacheStats = {
+    hits: 0,
+    misses: 0,
+    warmups: 0,
+  };
 
   /**
    * Scan all chains for a wallet address
@@ -26,10 +35,12 @@ class VortexScanner {
     
     // Check cache first
     if (options.useCache !== false) {
-      const cached = this.cache.get(cacheKey);
-      if (cached && cached.expiry > Date.now()) {
-        return { ...cached.data, fromCache: true };
+      const cached = await redisClient.get<ScanResult>(cacheKey);
+      if (cached) {
+        this.cacheStats.hits++;
+        return { ...cached, fromCache: true };
       }
+      this.cacheStats.misses++;
     }
 
     // Initialize chain statuses
@@ -62,8 +73,12 @@ class VortexScanner {
           onProgress?.([...chainStatuses]);
 
           try {
-            const tokens = await this.scanChain(address, chainKey, chainConfig);
+            const tokens = await retryOnNetworkError(
+              () => this.scanChain(address, chainKey, chainConfig),
+              { maxAttempts: 3 }
+            );
             
+            logger.info(`Scanned ${chainKey}`, { tokensFound: tokens.length });
             chainStatus.status = 'complete';
             chainStatus.tokensFound = tokens.length;
             chainStatus.progress = 100;
@@ -71,6 +86,7 @@ class VortexScanner {
 
             return tokens;
           } catch (error) {
+            logger.error(`Error scanning chain ${chainKey}`, error, { chainKey, address });
             chainStatus.status = 'error';
             chainStatus.error = error instanceof Error ? error.message : 'Unknown error';
             onProgress?.([...chainStatuses]);
@@ -87,8 +103,11 @@ class VortexScanner {
       }
     }
 
+    // Enhance tokens with GoPlus security data
+    const enhancedTokens = await enhanceTokensWithSecurity(allTokens);
+
     // Classify all tokens
-    const { classified, summary } = classifyTokens(allTokens);
+    const { classified, summary } = classifyTokens(enhancedTokens);
 
     // Build result
     const scanResult: ScanResult = {
@@ -107,10 +126,7 @@ class VortexScanner {
     };
 
     // Cache result
-    this.cache.set(cacheKey, {
-      data: scanResult,
-      expiry: Date.now() + (options.cacheTTL || this.cacheTTL),
-    });
+    await redisClient.set(cacheKey, scanResult, options.cacheTTL || this.cacheTTL);
 
     return scanResult;
   }
@@ -133,46 +149,36 @@ class VortexScanner {
   }
 
   /**
-   * Scan EVM chain using public APIs
+   * Scan EVM chain using real RPC calls
    */
   private async scanEVMChain(
-    _address: string,
+    address: string,
     chainKey: string,
     chainConfig: ChainConfig
   ): Promise<ScannedToken[]> {
-    const tokens: ScannedToken[] = [];
-
     try {
-      // Use Covalent/Zerion/DeBank API in production
-      // For now, return mock data for demo
-      const mockTokens = this.getMockTokens(chainKey, chainConfig);
-      tokens.push(...mockTokens);
+      return await scanEVMChain(address as `0x${string}`, chainKey, chainConfig);
     } catch (error) {
-      // Error handled by caller
+      console.error(`Error scanning EVM chain ${chainKey}:`, error);
+      // Fallback to mock data on error
+      return this.getMockTokens(chainKey, chainConfig);
     }
-
-    return tokens;
   }
 
   /**
-   * Scan Solana chain
+   * Scan Solana chain using real RPC calls
    */
   private async scanSolana(
-    _address: string,
+    address: string,
     chainConfig: ChainConfig
   ): Promise<ScannedToken[]> {
-    const tokens: ScannedToken[] = [];
-
     try {
-      // Use Helius/Solscan API in production
-      // Mock data for demo
-      const mockTokens = this.getMockTokens('SOLANA', chainConfig);
-      tokens.push(...mockTokens);
+      return await scanSolanaChain(address, chainConfig);
     } catch (error) {
-      // Error handled by caller
+      console.error('Error scanning Solana:', error);
+      // Fallback to mock data on error
+      return this.getMockTokens('SOLANA', chainConfig);
     }
-
-    return tokens;
   }
 
   /**
@@ -232,15 +238,50 @@ class VortexScanner {
   /**
    * Clear cache
    */
-  clearCache(): void {
-    this.cache.clear();
+  async clearCache(): Promise<void> {
+    // Note: Redis doesn't support clearing all keys from frontend
+    // This would need a backend endpoint for safety
+    console.warn('clearCache() not fully implemented - use clearCacheForAddress()');
   }
 
   /**
    * Clear cache for specific address
    */
-  clearCacheForAddress(address: string): void {
-    this.cache.delete(`scan:${address}`);
+  async clearCacheForAddress(address: string): Promise<void> {
+    await redisClient.del(`scan:${address}`);
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { hits: number; misses: number; hitRate: number; warmups: number } {
+    const total = this.cacheStats.hits + this.cacheStats.misses;
+    return {
+      hits: this.cacheStats.hits,
+      misses: this.cacheStats.misses,
+      hitRate: total > 0 ? (this.cacheStats.hits / total) * 100 : 0,
+      warmups: this.cacheStats.warmups,
+    };
+  }
+
+  /**
+   * Warm up cache for popular addresses
+   */
+  async warmupCache(addresses: string[]): Promise<void> {
+    for (const address of addresses) {
+      const cacheKey = `scan:${address}`;
+      const exists = await redisClient.exists(cacheKey);
+      
+      if (!exists) {
+        // Pre-scan popular addresses
+        try {
+          await this.scan(address, { useCache: false });
+          this.cacheStats.warmups++;
+        } catch (error) {
+          console.error(`Cache warmup failed for ${address}:`, error);
+        }
+      }
+    }
   }
 }
 

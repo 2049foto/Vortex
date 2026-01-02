@@ -1,0 +1,31 @@
+VORTEX PROTOCOL - HEALTH ENDPOINT VERIFICATION
+===============================================
+
+Date: 2026-01-02
+
+Health Check Endpoints:
+- GET /api/health - Basic health check
+- GET /api/health/ready - Readiness check
+- GET /api/health/live - Liveness check
+
+Expected Response (200 OK):
+{
+  "status": "ok",
+  "timestamp": "2026-01-02T00:00:00.000Z",
+  "version": "1.0.0",
+  "uptime": 3600,
+  "services": {
+    "database": "connected",
+    "cache": "connected"
+  },
+  "environment": "production"
+}
+
+To test locally:
+curl http://localhost:3001/api/health
+
+To test production:
+curl https://[YOUR-VERCEL-URL]/api/health
+
+Note: Replace [YOUR-VERCEL-URL] with actual deployment URL after deployment.
+

@@ -35,9 +35,15 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           charts: ['recharts'],
           utils: ['viem', 'zustand', 'clsx'],
+          virtual: ['@tanstack/react-virtual'],
+          solana: ['@solana/web3.js', '@solana/spl-token'],
         },
       },
     },
+    // Tree shaking is enabled by default in Vite
+    treeshake: true,
+    // Chunk size warnings
+    chunkSizeWarningLimit: 500,
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],

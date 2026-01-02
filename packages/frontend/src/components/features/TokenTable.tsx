@@ -3,7 +3,8 @@
  * Virtualized token list with batch actions
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, memo } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn, formatCurrency, formatPercent } from '@/lib/utils';
 import { Card, Badge, Button, Avatar, Tooltip, Switch } from '@/components/ui';
 import { getCategoryInfo, getActionInfo } from '@/lib/scanner/classifier';
@@ -28,6 +29,7 @@ export function TokenTable({
   const [selectedTokens, setSelectedTokens] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'value' | 'risk' | 'chain'>('value');
   const [filterCategory, setFilterCategory] = useState<TokenCategory | 'ALL'>('ALL');
+  const parentRef = useRef<HTMLDivElement>(null);
 
   // Filter and sort tokens
   const filteredTokens = useMemo(() => {
@@ -89,6 +91,14 @@ export function TokenTable({
     }
     return Array.from(actions);
   }, [selectedTokensList]);
+
+  // Virtual scrolling setup
+  const virtualizer = useVirtualizer({
+    count: filteredTokens.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 80, // Row height in pixels
+    overscan: 5, // Render 5 extra items outside viewport
+  });
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -196,114 +206,137 @@ export function TokenTable({
         </Card>
       )}
 
-      {/* Token List */}
+      {/* Token List with Virtual Scrolling */}
       <Card padding="none">
-        <div className="divide-y divide-neutral-100">
-          {filteredTokens.length === 0 ? (
-            <div className="p-8 text-center text-neutral-500">
-              No tokens found
-            </div>
-          ) : (
-            filteredTokens.map((token) => {
-              const key = `${token.chain}:${token.address}`;
-              const isSelected = selectedTokens.has(key);
-              const categoryInfo = getCategoryInfo(token.category);
-              const chainConfig = CHAINS[token.chain];
+        {filteredTokens.length === 0 ? (
+          <div className="p-8 text-center text-neutral-500">
+            No tokens found
+          </div>
+        ) : (
+          <div
+            ref={parentRef}
+            className="h-[600px] overflow-auto"
+            style={{ contain: 'strict' }}
+          >
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const token = filteredTokens[virtualRow.index];
+                if (!token) return null;
 
-              return (
-                <div
-                  key={key}
-                  className={cn(
-                    'flex items-center gap-4 p-4 hover:bg-neutral-50 transition-colors',
-                    isSelected && 'bg-sky-50'
-                  )}
-                >
-                  {/* Checkbox */}
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSelect(token)}
-                    className="w-5 h-5 rounded border-neutral-300 text-sky-500 focus:ring-sky-500"
-                  />
+                const key = `${token.chain}:${token.address}`;
+                const isSelected = selectedTokens.has(key);
+                const categoryInfo = getCategoryInfo(token.category);
+                const chainConfig = CHAINS[token.chain];
 
-                  {/* Token Info */}
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Avatar address={token.address} size="md" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-neutral-900 truncate">
-                          {token.symbol}
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    className={cn(
+                      'flex items-center gap-4 p-4 hover:bg-neutral-50 transition-colors border-b border-neutral-100',
+                      isSelected && 'bg-sky-50'
+                    )}
+                  >
+                    {/* Checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(token)}
+                      className="w-5 h-5 rounded border-neutral-300 text-sky-500 focus:ring-sky-500"
+                    />
+
+                    {/* Token Info */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Avatar address={token.address} size="md" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-neutral-900 truncate">
+                            {token.symbol}
+                          </p>
+                          <Tooltip content={chainConfig?.name || token.chain}>
+                            <span className="text-lg">{chainConfig?.icon || '⚪'}</span>
+                          </Tooltip>
+                        </div>
+                        <p className="text-sm text-neutral-500 truncate">
+                          {token.name}
                         </p>
-                        <Tooltip content={chainConfig?.name || token.chain}>
-                          <span className="text-lg">{chainConfig?.icon || '⚪'}</span>
-                        </Tooltip>
                       </div>
-                      <p className="text-sm text-neutral-500 truncate">
-                        {token.name}
+                    </div>
+
+                    {/* Value */}
+                    <div className="text-right min-w-[100px]">
+                      <p className="font-semibold text-neutral-900">
+                        {formatCurrency(token.valueUSD)}
+                      </p>
+                      <p className="text-sm text-neutral-500">
+                        {token.balanceFormatted.toLocaleString()} tokens
                       </p>
                     </div>
-                  </div>
 
-                  {/* Value */}
-                  <div className="text-right min-w-[100px]">
-                    <p className="font-semibold text-neutral-900">
-                      {formatCurrency(token.valueUSD)}
-                    </p>
-                    <p className="text-sm text-neutral-500">
-                      {token.balanceFormatted.toLocaleString()} tokens
-                    </p>
-                  </div>
-
-                  {/* Category Badge */}
-                  <Badge
-                    variant={
-                      token.category === 'PREMIUM' ? 'success' :
-                      token.category === 'RISK' ? 'danger' :
-                      token.category === 'DUST' ? 'warning' : 'default'
-                    }
-                    size="sm"
-                  >
-                    {categoryInfo.icon} {categoryInfo.label}
-                  </Badge>
-
-                  {/* Risk Score */}
-                  <div className="w-16 text-center">
-                    <div
-                      className={cn(
-                        'inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold',
-                        token.riskScore < 30 && 'bg-emerald-100 text-emerald-700',
-                        token.riskScore >= 30 && token.riskScore < 70 && 'bg-amber-100 text-amber-700',
-                        token.riskScore >= 70 && 'bg-red-100 text-red-700'
-                      )}
+                    {/* Category Badge */}
+                    <Badge
+                      variant={
+                        token.category === 'PREMIUM' ? 'success' :
+                        token.category === 'RISK' ? 'danger' :
+                        token.category === 'DUST' ? 'warning' : 'default'
+                      }
+                      size="sm"
                     >
-                      {token.riskScore}
+                      {categoryInfo.icon} {categoryInfo.label}
+                    </Badge>
+
+                    {/* Risk Score */}
+                    <div className="w-16 text-center">
+                      <div
+                        className={cn(
+                          'inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold',
+                          token.riskScore < 30 && 'bg-emerald-100 text-emerald-700',
+                          token.riskScore >= 30 && token.riskScore < 70 && 'bg-amber-100 text-amber-700',
+                          token.riskScore >= 70 && 'bg-red-100 text-red-700'
+                        )}
+                      >
+                        {token.riskScore}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      {token.allowedActions.map(action => {
+                        const actionInfo = getActionInfo(action);
+                        return (
+                          <Tooltip key={action} content={actionInfo.label}>
+                            <button
+                              onClick={() => onBatchAction(action, [token])}
+                              className={cn(
+                                'p-2 rounded-lg transition-colors',
+                                'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900'
+                              )}
+                            >
+                              {actionInfo.icon}
+                            </button>
+                          </Tooltip>
+                        );
+                      })}
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1">
-                    {token.allowedActions.map(action => {
-                      const actionInfo = getActionInfo(action);
-                      return (
-                        <Tooltip key={action} content={actionInfo.label}>
-                          <button
-                            onClick={() => onBatchAction(action, [token])}
-                            className={cn(
-                              'p-2 rounded-lg transition-colors',
-                              'hover:bg-neutral-100 text-neutral-600 hover:text-neutral-900'
-                            )}
-                          >
-                            {actionInfo.icon}
-                          </button>
-                        </Tooltip>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Summary */}

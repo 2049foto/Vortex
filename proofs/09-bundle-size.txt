@@ -1,0 +1,25 @@
+VORTEX PROTOCOL - BUNDLE SIZE VERIFICATION
+===========================================
+
+Date: 2026-01-02
+
+To verify bundle size:
+1. Run: cd packages/frontend && bun run build
+2. Check: du -sh dist/
+3. Target: < 5MB total
+
+Expected chunks:
+- vendor.js (React, ReactDOM, React Router)
+- charts.js (Recharts)
+- utils.js (viem, zustand, clsx)
+- virtual.js (@tanstack/react-virtual)
+- solana.js (@solana/web3.js)
+
+Optimization techniques applied:
+- Code splitting via Vite manualChunks
+- Tree shaking enabled
+- Minification with esbuild
+- Lazy loading for routes
+
+Note: Actual bundle size will be measured after production build.
+

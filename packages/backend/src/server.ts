@@ -17,6 +17,7 @@ import scan from './api/scan/scan';
 import portfolio from './api/portfolio/portfolio';
 import watchlist from './api/watchlist/watchlist';
 import alerts from './api/alerts/alerts';
+import cacheApi from './api/cache/cache';
 
 /**
  * Create and configure Hono app
@@ -38,6 +39,7 @@ app.route('/api/scan', scan);
 app.route('/api/portfolio', portfolio);
 app.route('/api/watchlist', watchlist);
 app.route('/api/alerts', alerts);
+app.route('/api/cache', cacheApi);
 
 // Root route
 app.get('/', (c) => {
