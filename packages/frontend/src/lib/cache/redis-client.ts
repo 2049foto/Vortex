@@ -3,7 +3,9 @@
  * Communicates with backend Redis cache via API
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { config } from '../config';
+
+const API_BASE_URL = config.api.url || 'http://localhost:3001';
 
 interface CacheResponse<T> {
   success: boolean;

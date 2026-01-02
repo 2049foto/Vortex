@@ -15,7 +15,8 @@ import {
   TorusWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { config } from '@/lib/wagmi/config';
+import { config as wagmiConfig } from '@/lib/wagmi/config';
+import { config as appConfig } from '@/lib/config';
 import '@rainbow-me/rainbowkit/styles.css';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -37,14 +38,25 @@ export function WalletProvider({ children, theme = 'light' }: WalletProviderProp
     []
   );
 
+  // Get Solana RPC endpoint (priority: Helius > QuickNode > Alchemy > fallback)
+  const solanaEndpoint = useMemo(() => {
+    return (
+      appConfig.rpc.heliusRpc ||
+      appConfig.rpc.heliusMainnet ||
+      appConfig.rpc.quicknodeSolana ||
+      appConfig.rpc.alchemySolana ||
+      'https://solana.drpc.org'
+    );
+  }, []);
+
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={theme === 'dark' ? darkTheme() : lightTheme()}
           modalSize="compact"
         >
-          <ConnectionProvider endpoint="https://solana.drpc.org">
+          <ConnectionProvider endpoint={solanaEndpoint}>
             <SolanaWalletProvider wallets={solanaWallets} autoConnect>
               <WalletModalProvider>
                 {children}

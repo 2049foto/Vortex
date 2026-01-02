@@ -4,8 +4,9 @@
  */
 
 import type { ScannedToken } from './types';
+import { config } from '../config';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = config.api.url || 'http://localhost:3001';
 
 interface GoPlusScanResult {
   token: {

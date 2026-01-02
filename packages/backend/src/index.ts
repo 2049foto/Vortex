@@ -19,24 +19,32 @@ const scanner = new MultiChainScanner();
 app.use(
   '*',
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin) => {
+      // Allow requests from configured origins
+      const allowedOrigins = config.cors.origins;
+      if (!origin || allowedOrigins.includes(origin)) {
+        return true;
+      }
+      // Default to first allowed origin
+      return allowedOrigins[0] || 'http://localhost:5173';
+    },
     credentials: true,
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
-// Supported chains
+// Supported chains (using config for RPC URLs)
 const SUPPORTED_CHAINS = [
-  { id: 56, name: 'BSC', symbol: 'BNB', rpc: 'https://bsc.drpc.org' },
-  { id: 42161, name: 'Arbitrum', symbol: 'ETH', rpc: 'https://arb1.arbitrum.io/rpc' },
-  { id: 8453, name: 'Base', symbol: 'ETH', rpc: 'https://base.drpc.org', isTarget: true },
-  { id: 137, name: 'Polygon', symbol: 'MATIC', rpc: 'https://polygon.drpc.org' },
-  { id: 838592, name: 'Monad', symbol: 'MONAD', rpc: 'https://monad.drpc.org' },
-  { id: 43114, name: 'Avalanche', symbol: 'AVAX', rpc: 'https://avalanche.drpc.org' },
-  { id: 10, name: 'Optimism', symbol: 'ETH', rpc: 'https://optimism.drpc.org' },
-  { id: 1, name: 'Ethereum', symbol: 'ETH', rpc: 'https://eth.llamarpc.com' },
-  { id: 'solana', name: 'Solana', symbol: 'SOL', rpc: 'https://solana.drpc.org' },
+  { id: 56, name: 'BSC', symbol: 'BNB', rpc: config.rpc.base || 'https://bsc.drpc.org' },
+  { id: 42161, name: 'Arbitrum', symbol: 'ETH', rpc: config.rpc.base || 'https://arb1.arbitrum.io/rpc' },
+  { id: 8453, name: 'Base', symbol: 'ETH', rpc: config.rpc.base || 'https://base.drpc.org', isTarget: true },
+  { id: 137, name: 'Polygon', symbol: 'MATIC', rpc: config.rpc.base || 'https://polygon.drpc.org' },
+  { id: 838592, name: 'Monad', symbol: 'MONAD', rpc: config.rpc.base || 'https://monad.drpc.org' },
+  { id: 43114, name: 'Avalanche', symbol: 'AVAX', rpc: config.rpc.base || 'https://avalanche.drpc.org' },
+  { id: 10, name: 'Optimism', symbol: 'ETH', rpc: config.rpc.base || 'https://optimism.drpc.org' },
+  { id: 1, name: 'Ethereum', symbol: 'ETH', rpc: config.rpc.alchemy.base || config.rpc.infura.base || 'https://eth.llamarpc.com' },
+  { id: 'solana', name: 'Solana', symbol: 'SOL', rpc: config.rpc.helius.rpc || config.rpc.solana || 'https://solana.drpc.org' },
 ];
 
 // ============================================

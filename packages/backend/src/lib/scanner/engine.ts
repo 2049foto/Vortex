@@ -1,26 +1,64 @@
 /**
  * Multi-Chain Scanner Engine
  * Scans EVM chains (viem) + Solana (@solana/web3.js)
+ * Uses RPC endpoints from environment configuration
  */
 
 import { createPublicClient, http, type Address } from 'viem';
 import { Connection, PublicKey, getTokenAccountsByOwner, TOKEN_PROGRAM_ID } from '@solana/web3.js';
+import { config } from '../config';
 import type { ScannedToken, ScanResult } from './types';
 
 export class MultiChainScanner {
+  /**
+   * Get RPC URL for chain (with fallback priority)
+   */
+  private getRPCUrl(chainId: number, chainName: string): string {
+    // Base chain - priority: QuickNode > Alchemy > Infura > fallback
+    if (chainId === 8453) {
+      return (
+        config.rpc.base ||
+        config.rpc.alchemy.base ||
+        config.rpc.infura.base ||
+        'https://base.drpc.org'
+      );
+    }
+
+    // Ethereum - priority: Alchemy > Infura > fallback
+    if (chainId === 1) {
+      return (
+        config.rpc.alchemy.base?.replace('base-mainnet', 'eth-mainnet') ||
+        config.rpc.infura.base?.replace('base-mainnet', 'mainnet') ||
+        'https://eth.llamarpc.com'
+      );
+    }
+
+    // Other chains - use fallback RPCs
+    const fallbackRPCs: Record<number, string> = {
+      56: 'https://bsc.drpc.org', // BSC
+      42161: 'https://arb1.arbitrum.io/rpc', // Arbitrum
+      137: 'https://polygon.drpc.org', // Polygon
+      838592: 'https://monad.drpc.org', // Monad
+      43114: 'https://avalanche.drpc.org', // Avalanche
+      10: 'https://optimism.drpc.org', // Optimism
+    };
+
+    return fallbackRPCs[chainId] || `https://${chainName.toLowerCase()}.drpc.org`;
+  }
+
   /**
    * Scan wallet address across all supported chains
    */
   async scan(address: string): Promise<ScanResult> {
     const chains = [
-      { id: 56, name: 'BSC', rpc: 'https://bsc.drpc.org' },
-      { id: 42161, name: 'Arbitrum', rpc: 'https://arb1.arbitrum.io/rpc' },
-      { id: 8453, name: 'Base', rpc: 'https://base.drpc.org' },
-      { id: 137, name: 'Polygon', rpc: 'https://polygon.drpc.org' },
-      { id: 838592, name: 'Monad', rpc: 'https://monad.drpc.org' },
-      { id: 43114, name: 'Avalanche', rpc: 'https://avalanche.drpc.org' },
-      { id: 10, name: 'Optimism', rpc: 'https://optimism.drpc.org' },
-      { id: 1, name: 'Ethereum', rpc: 'https://eth.llamarpc.com' },
+      { id: 56, name: 'BSC', rpc: this.getRPCUrl(56, 'BSC') },
+      { id: 42161, name: 'Arbitrum', rpc: this.getRPCUrl(42161, 'Arbitrum') },
+      { id: 8453, name: 'Base', rpc: this.getRPCUrl(8453, 'Base') },
+      { id: 137, name: 'Polygon', rpc: this.getRPCUrl(137, 'Polygon') },
+      { id: 838592, name: 'Monad', rpc: this.getRPCUrl(838592, 'Monad') },
+      { id: 43114, name: 'Avalanche', rpc: this.getRPCUrl(43114, 'Avalanche') },
+      { id: 10, name: 'Optimism', rpc: this.getRPCUrl(10, 'Optimism') },
+      { id: 1, name: 'Ethereum', rpc: this.getRPCUrl(1, 'Ethereum') },
     ];
 
     const allTokens: ScannedToken[] = [];
@@ -138,7 +176,15 @@ export class MultiChainScanner {
    * Scan Solana chain
    */
   private async scanSolanaChain(address: string): Promise<ScannedToken[]> {
-    const connection = new Connection('https://solana.drpc.org', 'confirmed');
+    // Priority: Helius > QuickNode > Alchemy > fallback
+    const solanaRPC =
+      config.rpc.helius.rpc ||
+      config.rpc.helius.mainnet ||
+      config.rpc.solana ||
+      config.rpc.alchemy.solana ||
+      'https://solana.drpc.org';
+    
+    const connection = new Connection(solanaRPC, 'confirmed');
     const ownerPublicKey = new PublicKey(address);
     const tokens: ScannedToken[] = [];
 
